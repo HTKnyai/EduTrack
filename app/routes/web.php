@@ -26,6 +26,10 @@ Route::post('/journals/store', [RegistrationController::class, 'storeJournal']);
 Route::post('/qas/store', [RegistrationController::class, 'storeQa']);
 Route::post('/materials/store', [RegistrationController::class, 'storeMaterial'])->middleware('auth');
 
-Route::get('/journals', [DisplayController::class, 'journals']);
+//Route::get('/journals', [DisplayController::class, 'journals']);
+Route::get('/journals', 'DisplayController@journals_index')->name('journals_index');
 Route::get('/journals/weekly-data', [DisplayController::class, 'weeklyData']);
 Route::post('/journals/store', [RegistrationController::class, 'storeJournal']);
+
+Route::get('/students', 'DisplayController@indexManagement')->name('students.index');
+Route::get('/students/{id}/journals', 'DisplayController@showStudentJournals')->name('students.journals');

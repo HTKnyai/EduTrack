@@ -41,7 +41,7 @@ class DisplayController extends Controller
         return view('dashboard', compact('weeklyData', 'qas', 'materials', 'yesterdayJournal'));
     }
 
-    // 学習ジャーナル一覧表示
+// 学習ジャーナル一覧表示
 public function journals()
 {
     $journals = Journal::with('user')->orderBy('start_time', 'desc')->get();
@@ -96,11 +96,29 @@ public function journals()
         return view('materials_create', compact('materials'));
     }
 
-    public function journals_index()
+    public function journals_index(Request $request)
     {
-        $journals = Journal::with('user')->orderBy('start_time', 'desc')->get();
+        $query = Journal::with('user');
     
-        // 直近1週間分のデータを取得し、日ごとの合計学習時間を計算
+        // ✅ 日付フィルター適用
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $query->whereBetween('start_time', [$request->start_date, $request->end_date]);
+        }
+    
+        // ✅ キーワード検索（学習内容・目標・疑問のいずれか）
+        if ($request->filled('keyword')) {
+            $keyword = $request->keyword;
+            $query->where(function ($q) use ($keyword) {
+                $q->where('learnings', 'like', "%$keyword%")
+                  ->orWhere('goals', 'like', "%$keyword%")
+                  ->orWhere('questions', 'like', "%$keyword%");
+            });
+        }
+    
+        // ✅ ページネーション適用 (10件ずつ)
+        $journals = $query->orderBy('start_time', 'desc')->paginate(10);
+    
+        // ✅ 直近1週間分のデータを取得し、日ごとの合計学習時間を計算
         $oneWeekAgo = Carbon::now()->subDays(7)->startOfDay();
         $weeklyData = Journal::where('start_time', '>=', $oneWeekAgo)
             ->selectRaw('DATE(start_time) as date, SUM(duration) as total_duration')
@@ -137,4 +155,43 @@ public function journals()
 
     return view('journals_create', compact('journals', 'weeklyData'));
 }
+
+public function indexManagement()
+{
+    // 全生徒を取得
+    $students = User::where('role', 0)->get(); // 役割0 = 生徒
+
+    // 生徒ごとの学習時間データを計算
+    $studentData = $students->map(function ($student) {
+        // 平均学習時間（過去7日間）
+        $averageDuration = Journal::where('user_id', $student->id)
+            ->where('start_time', '>=', Carbon::now()->subDays(7))
+            ->avg('duration');
+
+        // 昨日の学習時間合計
+        $yesterdayDuration = Journal::where('user_id', $student->id)
+            ->whereDate('start_time', Carbon::yesterday())
+            ->sum('duration');
+
+        return [
+            'id' => $student->id,
+            'name' => $student->name,
+            'averageDuration' => round($averageDuration / 60, 1) . ' 分',
+            'yesterdayDuration' => round($yesterdayDuration / 60, 1) . ' 分',
+        ];
+    });
+
+    return view('students_index', compact('studentData'));
+}
+
+public function showStudentJournals($id)
+{
+    $student = User::findOrFail($id);
+    $journals = Journal::where('user_id', $id)
+        ->orderBy('start_time', 'desc')
+        ->get();
+
+    return view('students_journals', compact('student', 'journals'));
+}
+
 }

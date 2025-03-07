@@ -18,6 +18,7 @@
                     <li class="nav-item"><a class="nav-link" href="/journals">学習ジャーナル</a></li>
                     <li class="nav-item"><a class="nav-link" href="/qas">Q&A</a></li>
                     <li class="nav-item"><a class="nav-link" href="/materials">教材</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/students">生徒管理</a></li> 
                 </ul>
                 
                 <!-- ユーザー認証機能 -->

@@ -9,6 +9,36 @@
         <canvas id="learningChart"></canvas>
     </div>
 
+
+    <!-- 🔍 検索フォーム -->
+    <form action="{{ route('journals_index') }}" method="GET" class="mb-3">
+        <div class="row">
+            <!-- 開始日 -->
+            <div class="col-md-3">
+                <label>開始日:</label>
+                <input type="date" name="start_date" class="form-control" value="{{ request('start_date') }}">
+            </div>
+            
+            <!-- 終了日 -->
+            <div class="col-md-3">
+                <label>終了日:</label>
+                <input type="date" name="end_date" class="form-control" value="{{ request('end_date') }}">
+            </div>
+
+            <!-- キーワード検索 -->
+            <div class="col-md-4">
+                <label>学習内容を検索:</label>
+                <input type="text" name="keyword" class="form-control" placeholder="例: 三角関数" value="{{ request('keyword') }}">
+            </div>
+
+            <!-- 検索ボタン -->
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">検索</button>
+            </div>
+        </div>
+    </form>
+
+    <!-- 📊 学習ジャーナル一覧 -->
     <table class="table">
         <thead>
             <tr>
@@ -27,7 +57,7 @@
                 <td>{{ $journal->user->name }}</td>
                 <td>{{ $journal->start_time }}</td>
                 <td>{{ $journal->end_time }}</td>
-                <td>{{ $journal->duration }} 秒</td>
+                <td>{{ $journal->duration }} 分</td>
                 <td>{{ $journal->goals }}</td>
                 <td>{{ $journal->learnings }}</td>
                 <td>{{ $journal->questions }}</td>
@@ -35,6 +65,11 @@
             @endforeach
         </tbody>
     </table>
+
+    <!-- 📌 ページネーション -->
+    <div class="d-flex justify-content-center">
+        {{ $journals->appends(request()->query())->links() }}
+    </div>
 </div>
 
 <!-- Chart.js のスクリプト -->
