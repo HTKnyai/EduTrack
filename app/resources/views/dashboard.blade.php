@@ -11,10 +11,10 @@
                 <div class="card-header">学習ジャーナル</div>
                 <div class="card-body">
                     <!-- 昨日の学習記録 -->
-                    @if(isset($yesterdayJournal))
+                    @if(isset($yesterdayJournal) && $yesterdayJournal->total_duration > 0)
                         <div class="mb-3">
                             <h5>昨日の学習記録</h5>
-                            <p><strong>学習時間:</strong> {{ $yesterdayJournal->duration }} 分</p>
+                            <p><strong>学習時間:</strong> {{ round($yesterdayJournal->total_duration / 60, 1) }} 分</p>
                             <p><strong>学習内容:</strong> {{ $yesterdayJournal->learnings }}</p>
                             <p><strong>疑問点:</strong> {{ $yesterdayJournal->questions }}</p>
                         </div>
@@ -41,13 +41,14 @@
                 <div class="card-header">Q&A（質問掲示板）</div>
                 <div class="card-body">
                     <ul class="list-group">
-                        @foreach($qas as $qa)
-                            <li class="list-group-item">
-                                <strong>
-                                    @if($qa->anonymize) 匿名 @else {{ $qa->user->name }} @endif
-                                </strong>: {{ $qa->contents }}
-                            </li>
-                        @endforeach
+                    @foreach($qas as $qa)
+                        <li class="list-group-item">
+                            <strong>
+                                @if($qa->anonymize) 匿名 @else {{ $qa->user->name }} @endif
+                            </strong>: {{ $qa->contents }}
+                            <span class="text-muted">（{{ $qa->created_at->format('Y-m-d') }}）</span>
+                        </li>
+                    @endforeach
                     </ul>
                     <a href="/qas" class="btn btn-secondary mt-2">もっと見る</a>
                 </div>
@@ -77,10 +78,10 @@
     document.addEventListener("DOMContentLoaded", function() {
         var ctx = document.getElementById('learningChart').getContext('2d');
         var chartData = {
-            labels: {!! json_encode($journals->pluck('start_time')->map(fn($date) => \Carbon\Carbon::parse($date)->format('m/d'))) !!},
+            labels: {!! json_encode($weeklyData->pluck('date')->map(fn($date) => \Carbon\Carbon::parse($date)->format('m/d'))) !!},
             datasets: [{
                 label: '学習時間 (分)',
-                data: {!! json_encode($journals->pluck('duration')) !!},
+                data: {!! json_encode($weeklyData->pluck('total_duration')->map(fn($d) => round($d / 60, 1))) !!},
                 backgroundColor: 'rgba(54, 162, 235, 0.5)',
                 borderColor: 'rgba(54, 162, 235, 1)',
                 borderWidth: 2
