@@ -16,7 +16,7 @@ class CreateQasTables extends Migration
         Schema::create('qas', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->integer('user_id');
-            $table->integer('target_id')->default(0);
+            $table->integer('target_id')->default(NULL);
             $table->text('contents');
             $table->boolean('anonymize')->default(false);
             $table->timestamps();

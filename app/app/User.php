@@ -8,6 +8,7 @@ use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
+    
     use Notifiable;
 
     /**
@@ -16,8 +17,25 @@ class User extends Authenticatable
      * @var array
      */
     protected $fillable = [
-        'name', 'email', 'password',
+        'name', 'email', 'password','role'
     ];
+
+    public function journals()
+    {
+        return $this->hasMany(Journal::class);
+    }
+
+    // 1ユーザーは複数の質問を投稿できる
+    public function qas()
+    {
+        return $this->hasMany(Qa::class);
+    }
+
+    // 教師がアップロードした教材
+    public function materials()
+    {
+        return $this->hasMany(Material::class, 'teacher_id');
+    }
 
     /**
      * The attributes that should be hidden for arrays.
