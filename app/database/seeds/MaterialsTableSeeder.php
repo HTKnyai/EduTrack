@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Database\Seeder;
-
+use App\User;
 use Carbon\Carbon; //追記　現在時刻を入れる
 
 class MaterialsTableSeeder extends Seeder

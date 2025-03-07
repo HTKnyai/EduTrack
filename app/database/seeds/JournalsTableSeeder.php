@@ -1,7 +1,8 @@
 <?php
 
 use Illuminate\Database\Seeder;
-
+use App\User;
+use App\Journal;
 use Carbon\Carbon; //追記　現在時刻を入れる
 
 class JournalsTableSeeder extends Seeder
@@ -13,6 +14,25 @@ class JournalsTableSeeder extends Seeder
      */
     public function run()
     {
+        $users = User::all();
+        $subjects = ['数学', '物理', '英語', '化学', '歴史'];
+
+        for ($i = 0; $i < 7; $i++) {
+            foreach ($users as $user) {
+                $date = Carbon::now()->subDays($i);
+
+                Journal::create([
+                    'user_id' => $user->id,
+                    'start_time' => $date->copy()->setTime(19, rand(0, 59)),
+                    'end_time' => $date->copy()->setTime(20, rand(0, 59)),
+                    'duration' => rand(30, 90),
+                    'goals' => $subjects[array_rand($subjects)] . 'の復習',
+                    'learnings' => '公式を理解するために演習問題を解いた',
+                    'questions' => 'もっと効率よく暗記する方法はあるか？'
+                ]);
+            }
+        }
+
         $startTime = Carbon::now()->subMinutes(10); // 10分前に学習開始
         $endTime = Carbon::now(); // 今学習終了
         $duration = $endTime->diffInSeconds($startTime); // 差分を秒数で取得
@@ -28,5 +48,6 @@ class JournalsTableSeeder extends Seeder
             'created_at'=>Carbon::now(),
             'updated_at'=>Carbon::now(),
         ]);
+        
     }
 }
