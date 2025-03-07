@@ -5,6 +5,28 @@
 @section('content')
 <div class="container">
     <h2>{{ $student->name }} の学習ジャーナル</h2>
+
+    <!-- 検索フォーム -->
+    <form action="{{ route('students.journals', $student->id) }}" method="GET" class="mb-3">
+        <div class="row">
+            <div class="col-md-3">
+                <input type="date" name="date" class="form-control" value="{{ request('date') }}">
+            </div>
+            <div class="col-md-3">
+                <input type="text" name="goal" class="form-control" placeholder="目標で検索" value="{{ request('goal') }}">
+            </div>
+            <div class="col-md-3">
+                <input type="text" name="learning" class="form-control" placeholder="学習内容で検索" value="{{ request('learning') }}">
+            </div>
+            <div class="col-md-3">
+                <input type="text" name="question" class="form-control" placeholder="疑問で検索" value="{{ request('question') }}">
+            </div>
+            <div class="col-md-3 mt-2">
+                <button type="submit" class="btn btn-primary">検索</button>
+            </div>
+        </div>
+    </form>
+
     <table class="table">
         <thead>
             <tr>
@@ -29,5 +51,10 @@
             @endforeach
         </tbody>
     </table>
+
+    <!-- ページネーション -->
+    <div class="mt-3">
+        {{ $journals->links() }}
+    </div>
 </div>
 @endsection

@@ -128,6 +128,7 @@ public function journals()
     
         return view('journals_index', compact('journals', 'weeklyData'));
     }
+
     /*不使用
     public function qas_index() 
     {
@@ -156,40 +157,64 @@ public function journals()
     return view('journals_create', compact('journals', 'weeklyData'));
 }
 
-public function indexManagement()
+public function indexManagement(Request $request)
 {
-    // 全生徒を取得
-    $students = User::where('role', 0)->get(); // 役割0 = 生徒
+    // 検索処理
+    $query = User::where('role', 0); // 生徒のみ
 
-    // 生徒ごとの学習時間データを計算
+    if ($request->filled('search')) {
+        $query->where('name', 'like', '%' . $request->search . '%');
+    }
+
+    $students = $query->get();
+
+    // 生徒ごとのデータ取得
     $studentData = $students->map(function ($student) {
         // 平均学習時間（過去7日間）
         $averageDuration = Journal::where('user_id', $student->id)
             ->where('start_time', '>=', Carbon::now()->subDays(7))
             ->avg('duration');
 
-        // 昨日の学習時間合計
-        $yesterdayDuration = Journal::where('user_id', $student->id)
+        // 昨日の学習時間合計 & 学習記録
+        $yesterdayJournal = Journal::where('user_id', $student->id)
             ->whereDate('start_time', Carbon::yesterday())
-            ->sum('duration');
+            ->orderBy('start_time', 'desc')
+            ->first();
 
         return [
             'id' => $student->id,
             'name' => $student->name,
             'averageDuration' => round($averageDuration / 60, 1) . ' 分',
-            'yesterdayDuration' => round($yesterdayDuration / 60, 1) . ' 分',
+            'yesterdayDuration' => round(optional($yesterdayJournal)->duration / 60, 1) . ' 分',
+            'yesterdayGoals' => optional($yesterdayJournal)->goals ?? 'なし',
+            'yesterdayLearnings' => optional($yesterdayJournal)->learnings ?? 'なし',
+            'yesterdayQuestions' => optional($yesterdayJournal)->questions ?? 'なし',
         ];
     });
 
     return view('students_index', compact('studentData'));
 }
 
-public function showStudentJournals($id)
+public function showStudentJournals($id, Request $request)
 {
     $student = User::findOrFail($id);
-    $journals = Journal::where('user_id', $id)
-        ->orderBy('start_time', 'desc')
-        ->get();
+    $query = Journal::where('user_id', $id)->orderBy('start_time', 'desc');
+
+    // 検索条件
+    if ($request->filled('date')) {
+        $query->whereDate('start_time', $request->date);
+    }
+    if ($request->filled('goal')) {
+        $query->where('goals', 'like', '%' . $request->goal . '%');
+    }
+    if ($request->filled('learning')) {
+        $query->where('learnings', 'like', '%' . $request->learning . '%');
+    }
+    if ($request->filled('question')) {
+        $query->where('questions', 'like', '%' . $request->question . '%');
+    }
+
+    $journals = $query->paginate(10); // ページネーションを追加
 
     return view('students_journals', compact('student', 'journals'));
 }
