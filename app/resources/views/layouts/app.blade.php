@@ -14,10 +14,33 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav">
+                <ul class="navbar-nav me-auto">
                     <li class="nav-item"><a class="nav-link" href="/journals">学習ジャーナル</a></li>
                     <li class="nav-item"><a class="nav-link" href="/qas">Q&A</a></li>
                     <li class="nav-item"><a class="nav-link" href="/materials">教材</a></li>
+                </ul>
+                
+                <!-- ユーザー認証機能 -->
+                <ul class="navbar-nav ms-auto">
+                    @guest
+                        <li class="nav-item"><a class="nav-link" href="{{ route('login') }}">ログイン</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ route('register') }}">新規登録</a></li>
+                    @else
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                {{ Auth::user()->name }} さん
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="{{ route('logout') }}"
+                                    onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                                    ログアウト
+                                </a></li>
+                            </ul>
+                            <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                                @csrf
+                            </form>
+                        </li>
+                    @endguest
                 </ul>
             </div>
         </div>

@@ -24,3 +24,6 @@ Route::post('/materials/store', [RegistrationController::class, 'storeMaterial']
 Route::get('/journals', [DisplayController::class, 'journals']);
 Route::get('/journals/weekly-data', [DisplayController::class, 'weeklyData']);
 Route::post('/journals/store', [RegistrationController::class, 'storeJournal']);
+Auth::routes();
+
+Route::get('/home', 'HomeController@index')->name('home');
