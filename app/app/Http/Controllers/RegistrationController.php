@@ -3,27 +3,92 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Journal;
 
 class RegistrationController extends Controller
 {
-    // 学習ジャーナル新規登録
     public function storeJournal(Request $request)
     {
-        $journal = Journal::create($request->all());
-        return redirect('/journals')->with('success', '学習ジャーナルを追加しました！');
+        $validated = $request->validate([
+            'goals' => 'required|string|max:255',
+            'learnings' => 'required|string|max:255',
+            'questions' => 'nullable|string|max:255',
+            'start_time' => 'required|date',
+            'end_time' => 'required|date|after:start_time',
+            'duration' => 'required|integer|min:1',
+        ]);
+    
+        Journal::create([
+            'user_id' => auth()->id(), // ログイン中のユーザー
+            'start_time' => $validated['start_time'],
+            'end_time' => $validated['end_time'],
+            'duration' => $validated['duration'],
+            'goals' => $validated['goals'],
+            'learnings' => $validated['learnings'],
+            'questions' => $validated['questions'],
+        ]);
+    
+        return redirect('/journals')->with('success', '学習ジャーナルが追加されました！');
     }
+    
 
     // Q&A新規登録
+
+    public function storeQa(Request $request)
+    {
+        $validated = $request->validate([
+            'contents' => 'required|string|max:500',
+            'target_id' => 'nullable|integer',
+            'anonymize' => 'nullable|boolean',
+        ]);
+    
+        if (!Auth::check()) {
+            return redirect('/login')->with('error', 'ログインしてください');
+        }
+    
+        $user = Auth::user();
+    
+        Qa::create([
+            'user_id' => $user->id,
+            'target_id' => $validated['target_id'] ?? 0, // 新規質問は target_id = 0
+            'contents' => $validated['contents'],
+            'anonymize' => $request->has('anonymize') ? 1 : 0,
+        ]);
+    
+        return redirect('/qas')->with('success', '質問が投稿されました！');
+    }
+    /*
     public function storeQa(Request $request)
     {
         $qa = Qa::create($request->all());
         return redirect('/qas')->with('success', '質問を投稿しました！');
     }
-
+    */
+    
     // 教材新規登録
     public function storeMaterial(Request $request)
     {
-        $material = Material::create($request->all());
-        return redirect('/materials')->with('success', '教材を追加しました！');
+        // バリデーション
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'file' => 'required|file|mimes:pdf,doc,docx,ppt,pptx,txt|max:2048', // 許可するファイル形式とサイズ制限
+        ]);
+
+        // ファイルの保存
+        if ($request->hasFile('file')) {
+            $filePath = $request->file('file')->store('materials', 'public'); // storage/app/public/materials に保存
+        } else {
+            return back()->with('error', 'ファイルのアップロードに失敗しました');
+        }
+
+        // データベースに保存
+        Material::create([
+            'teacher_id' => auth()->id(), // 認証済みユーザーをアップロード者として設定
+            'title' => $request->title,
+            'file_path' => 'storage/' . $filePath, // 公開ディレクトリからアクセスできるようにする
+            'dls' => 0, // 初期のダウンロード数は0
+        ]);
+
+        return back()->with('success', '教材をアップロードしました');
     }
 }

@@ -1,3 +1,4 @@
+<!--不使用
 @extends('layouts.app')
 
 @section('title', '教材アップロード')
@@ -17,3 +18,4 @@
         <button type="submit" class="btn btn-primary">登録</button>
     </form>
 @endsection
+-->

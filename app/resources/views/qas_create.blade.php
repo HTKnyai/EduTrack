@@ -1,3 +1,4 @@
+<!--使用しない-->
 @extends('layouts.app')
 
 @section('title', 'Q&A投稿')
