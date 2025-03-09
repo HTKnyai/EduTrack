@@ -4,24 +4,26 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Journal;
+use Carbon\Carbon;
 
 class RegistrationController extends Controller
 {
+
     public function storeJournal(Request $request)
     {
         $validated = $request->validate([
             'goals' => 'required|string|max:255',
             'learnings' => 'required|string|max:255',
             'questions' => 'nullable|string|max:255',
-            'start_time' => 'required|date',
-            'end_time' => 'required|date|after:start_time',
+            'start_time' => 'required|date_format:Y-m-d H:i:s',
+            'end_time' => 'required|date_format:Y-m-d H:i:s|after:start_time',
             'duration' => 'required|integer|min:1',
         ]);
     
         Journal::create([
-            'user_id' => auth()->id(), // ログイン中のユーザー
-            'start_time' => $validated['start_time'],
-            'end_time' => $validated['end_time'],
+            'user_id' => auth()->id(),
+            'start_time' => Carbon::createFromFormat('Y-m-d H:i:s', $validated['start_time']),
+            'end_time' => Carbon::createFromFormat('Y-m-d H:i:s', $validated['end_time']),
             'duration' => $validated['duration'],
             'goals' => $validated['goals'],
             'learnings' => $validated['learnings'],

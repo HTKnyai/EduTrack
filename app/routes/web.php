@@ -16,7 +16,7 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['role:0'])->group(function () {
         Route::get('/journals', [DisplayController::class, 'journals_index'])->name('journals_index');
         Route::get('/journals/weekly-data', [DisplayController::class, 'weeklyData']);
-        Route::post('/journals/store', [RegistrationController::class, 'storeJournal']);
+        Route::post('/journals/store', [RegistrationController::class, 'storeJournal'])->name('journals.store');
     });
 
     // ✅ 教師専用（生徒管理）

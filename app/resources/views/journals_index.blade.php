@@ -3,7 +3,6 @@
 @section('content')
 <div class="container">
     <h2>学習ジャーナル</h2>
-
     <div class="row">
         <!-- 📊 グラフエリア（左側） -->
         <div class="col-md-8">
@@ -12,26 +11,34 @@
 
         <!-- 📝 フォームエリア（右側） -->
         <div class="col-md-4">
-            <div class="mb-3">
-                <label class="form-label">学習目標</label>
-                <input type="text" name="goals" class="form-control">
-            </div>
-            <div class="mb-3">
-                <label class="form-label">学習内容</label>
-                <textarea name="learnings" class="form-control" rows="2"></textarea>
-            </div>
-            <div class="mb-3">
-                <label class="form-label">疑問点</label>
-                <textarea name="questions" class="form-control" rows="2"></textarea>
-            </div>
-            <div class="mb-3">
-                <button class="btn btn-success w-100">学習開始</button>
-            </div>
-            <div class="mb-3">
-                <button class="btn btn-danger w-100">学習終了</button>
-            </div>
+            <form action="{{ route('journals.store') }}" method="POST">
+                @csrf
+                <div class="mb-3">
+                    <label class="form-label">学習目標</label>
+                    <input type="text" name="goals" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">学習内容</label>
+                    <textarea name="learnings" class="form-control" rows="2" required></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">疑問点</label>
+                    <textarea name="questions" class="form-control" rows="2"></textarea>
+                </div>
+
+                <!-- ✅ 学習開始時間 -->
+                <input type="hidden" name="start_time" id="start_time">
+                <input type="hidden" name="end_time" id="end_time">
+                <input type="hidden" name="duration" id="duration">
+
+                <!-- 🟢 学習開始ボタン -->
+                <button type="button" class="btn btn-success w-100" id="startButton">学習開始</button>
+                <!-- 🔴 学習終了ボタン -->
+                <button type="submit" class="btn btn-danger w-100 mt-2" id="endButton" disabled>学習終了</button>
+            </form>
         </div>
     </div>
+
 
     <h3>記録一覧</h3>
     <!-- 🔍 検索フォーム -->
@@ -117,6 +124,36 @@ document.addEventListener("DOMContentLoaded", function() {
                 y: { beginAtZero: true }
             }
         }
+    });
+});
+//学習開始・終了
+document.addEventListener("DOMContentLoaded", function() {
+    let startTime = null;
+
+    function formatDateForMySQL(date) {
+        return date.getFullYear() + '-' +
+            ('0' + (date.getMonth() + 1)).slice(-2) + '-' +
+            ('0' + date.getDate()).slice(-2) + ' ' +
+            ('0' + date.getHours()).slice(-2) + ':' +
+            ('0' + date.getMinutes()).slice(-2) + ':' +
+            ('0' + date.getSeconds()).slice(-2);
+    }
+
+    document.getElementById("startButton").addEventListener("click", function() {
+        startTime = new Date();
+        document.getElementById("start_time").value = formatDateForMySQL(startTime);
+        document.getElementById("startButton").disabled = true;
+        document.getElementById("endButton").disabled = false;
+    });
+
+    document.getElementById("endButton").addEventListener("click", function() {
+        if (!startTime) return;
+
+        let endTime = new Date();
+        document.getElementById("end_time").value = formatDateForMySQL(endTime);
+
+        let duration = Math.round((endTime - startTime) / 1000); // 秒単位
+        document.getElementById("duration").value = duration;
     });
 });
 </script>
