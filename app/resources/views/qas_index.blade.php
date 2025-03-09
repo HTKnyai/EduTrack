@@ -6,10 +6,10 @@
 <div class="container">
     <h2>Q&A（質問掲示板）</h2>
 
-    <!-- 質問投稿ボタン -->
+    <!-- 🔹 質問投稿ボタン -->
     <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#qaModal">投稿</button>
 
-    <!-- 質問投稿モーダル -->
+    <!-- ✏ 質問投稿モーダル -->
     <div class="modal fade" id="qaModal" tabindex="-1" aria-labelledby="qaModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -18,7 +18,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <form action="/qas/store" method="POST">
+                    <form action="{{ route('qas.store') }}" method="POST">
                         @csrf
                         <div class="mb-3">
                             <label class="form-label">内容</label>
@@ -29,7 +29,7 @@
                             <select name="target_id" class="form-select">
                                 <option value="0">新規質問</option>
                                 @foreach($qas as $qa)
-                                    <option value="{{ $qa->id }}">{{ $qa->contents }}</option>
+                                    <option value="{{ $qa->id }}">{{ Str::limit($qa->contents, 30) }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -44,28 +44,22 @@
         </div>
     </div>
 
-    <!-- 質問一覧（ツリー形式） -->
+    <!-- 📄 質問一覧（ツリー形式） -->
     <div class="mt-4">
         <ul class="list-group">
-            @foreach($qas->where('target_id', 0) as $qa)
+            @foreach($qas->where('target_id', 0) as $qa) {{-- 親質問のみ表示 --}}
                 <li class="list-group-item">
                     <strong>
                         @if($qa->anonymize) 匿名 @else {{ $qa->user->name }} @endif
                     </strong>:
                     {{ $qa->contents }}
-                    <span class="text-muted">（{{ $qa->created_at }}）</span>
+                    <span class="text-muted">（{{ $qa->created_at->format('Y-m-d H:i') }}）</span>
 
-                    <!-- 回答一覧（入れ子リスト） -->
+                    <!-- 🔹 回答一覧（ネスト構造） -->
                     @if($qa->replies->count() > 0)
                         <ul class="list-group mt-2">
                             @foreach($qa->replies as $reply)
-                                <li class="list-group-item">
-                                    <strong>
-                                        @if($reply->anonymize) 匿名 @else {{ $reply->user->name }} @endif
-                                    </strong>:
-                                    {{ $reply->contents }}
-                                    <span class="text-muted">（{{ $reply->created_at }}）</span>
-                                </li>
+                                @include('qa_reply', ['reply' => $reply])
                             @endforeach
                         </ul>
                     @endif

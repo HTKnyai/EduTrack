@@ -14,26 +14,28 @@ class Qa extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function target()
+    // 🔹 `target_id` が `0` の質問（親）
+    public function parent()
     {
         return $this->belongsTo(Qa::class, 'target_id');
     }
 
+    // 🔹 `target_id` を持つ回答（子）
     public function replies()
     {
         return $this->hasMany(Qa::class, 'target_id');
     }
-    /*
-    protected $fillable = ['user_id', 'target_id', 'contents', 'anonymize'];
 
-    public function user()
+    // 🔹 **再帰的に全ての子要素を取得する**
+    public function allReplies()
     {
-        return $this->belongsTo(User::class);
+        return $this->replies()->with('allReplies');
     }
+}
 
-    public function target()
+/*    
+public function target()
     {
         return $this->belongsTo(Qa::class, 'target_id');
-    }
-    */
-}
+    } 
+*/

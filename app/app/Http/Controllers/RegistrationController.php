@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth; 
 use App\Journal;
+use App\Qa;
 use Carbon\Carbon;
 
 class RegistrationController extends Controller
@@ -35,28 +37,26 @@ class RegistrationController extends Controller
     
 
     // Q&A新規登録
-
     public function storeQa(Request $request)
     {
+        // バリデーション
         $validated = $request->validate([
             'contents' => 'required|string|max:500',
-            'target_id' => 'nullable|integer',
-            'anonymize' => 'nullable|boolean',
+            'target_id' => 'nullable|integer|min:0', // `min:0` を追加（新規質問は0）
         ]);
-    
+
         if (!Auth::check()) {
             return redirect('/login')->with('error', 'ログインしてください');
         }
-    
-        $user = Auth::user();
-    
+
+        // Q&A データ登録
         Qa::create([
-            'user_id' => $user->id,
-            'target_id' => $validated['target_id'] ?? 0, // 新規質問は target_id = 0
+            'user_id' => Auth::id(), // ログイン中のユーザー
+            'target_id' => $validated['target_id'] ?? 0, // 未入力時は新規質問として `0`
             'contents' => $validated['contents'],
-            'anonymize' => $request->has('anonymize') ? 1 : 0,
+            'anonymize' => $request->filled('anonymize') ? 1 : 0, // チェックボックスの有無
         ]);
-    
+
         return redirect('/qas')->with('success', '質問が投稿されました！');
     }
     /*

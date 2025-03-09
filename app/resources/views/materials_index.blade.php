@@ -5,33 +5,35 @@
     <h2>教材一覧</h2>
 
     <!-- 教材アップロードボタン -->
-    <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#materialModal">教材をアップロード</button>
+    @if(auth()->user()->role == 1)  <!-- 1: 教師 -->
+        <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#materialModal">教材をアップロード</button>
 
-    <!-- 教材アップロードモーダル -->
-    <div class="modal fade" id="materialModal" tabindex="-1" aria-labelledby="materialModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="materialModalLabel">教材をアップロード</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form action="/materials/store" method="POST" enctype="multipart/form-data">
-                        @csrf
-                        <div class="mb-3">
-                            <label class="form-label">タイトル</label>
-                            <input type="text" name="title" class="form-control" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">ファイル</label>
-                            <input type="file" name="file" class="form-control" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary">登録</button>
-                    </form>
+        <!-- 教材アップロードモーダル -->
+        <div class="modal fade" id="materialModal" tabindex="-1" aria-labelledby="materialModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="materialModalLabel">教材をアップロード</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form action="/materials/store" method="POST" enctype="multipart/form-data">
+                            @csrf
+                            <div class="mb-3">
+                                <label class="form-label">タイトル</label>
+                                <input type="text" name="title" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">ファイル</label>
+                                <input type="file" name="file" class="form-control" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">登録</button>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+    @endif
 
     <!-- 教材一覧テーブル -->
     <table class="table">

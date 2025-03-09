@@ -78,7 +78,8 @@ public function journals()
     // 質問掲示板一覧表示
     public function qas_index()
     {
-        $qas = Qa::with(['user', 'target', 'replies'])->get();
+        $qas = Qa::with(['user', 'allReplies.user'])->where('target_id', 0)->latest()->get();
+    
         return view('qas_index', compact('qas'));
     }
     /*
@@ -98,7 +99,11 @@ public function journals()
 
     public function journals_index(Request $request)
     {
-        $query = Journal::with('user');
+        // ログイン中のユーザーID
+        $userId = auth()->id();
+    
+        // 自分のジャーナルのみ取得
+        $query = Journal::where('user_id', $userId);
     
         // ✅ 日付フィルター適用
         if ($request->filled('start_date') && $request->filled('end_date')) {
@@ -120,7 +125,8 @@ public function journals()
     
         // ✅ 直近1週間分のデータを取得し、日ごとの合計学習時間を計算
         $oneWeekAgo = Carbon::now()->subDays(7)->startOfDay();
-        $weeklyData = Journal::where('start_time', '>=', $oneWeekAgo)
+        $weeklyData = Journal::where('user_id', $userId) // 👈 自分のデータのみ
+            ->where('start_time', '>=', $oneWeekAgo)
             ->selectRaw('DATE(start_time) as date, SUM(duration) as total_duration')
             ->groupBy('date')
             ->orderBy('date', 'asc')
