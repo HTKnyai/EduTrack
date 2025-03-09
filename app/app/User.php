@@ -20,6 +20,16 @@ class User extends Authenticatable
         'name', 'email', 'password','role'
     ];
 
+    public function isTeacher()
+    {
+        return $this->role == 1; // 1: 教師
+    }
+    
+    public function isStudent()
+    {
+        return $this->role == 0; // 0: 生徒
+    }
+
     public function journals()
     {
         return $this->hasMany(Journal::class);
@@ -54,4 +64,5 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+
 }
