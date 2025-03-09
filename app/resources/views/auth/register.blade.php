@@ -61,6 +61,14 @@
                             </div>
                         </div>
 
+                        <div class="mb-3"><!--ロール追加-->
+                            <label for="role" class="form-label">ユーザータイプ</label>
+                            <select name="role" id="role" class="form-control" required>
+                                <option value="0">生徒</option>
+                                <option value="1">教師</option>
+                            </select>
+                        </div>
+
                         <div class="form-group row mb-0">
                             <div class="col-md-6 offset-md-4">
                                 <button type="submit" class="btn btn-primary">
