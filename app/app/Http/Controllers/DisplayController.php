@@ -76,19 +76,37 @@ public function journals()
     }
 
     // 質問掲示板一覧表示
-    public function qas_index()
+    public function qas_index(Request $request)
     {
-        $qas = Qa::with(['user', 'allReplies.user'])->where('target_id', 0)->latest()->get();
+        $query = Qa::with(['user', 'target', 'replies']);
+    
+        // 🔍 キーワード検索（質問・回答の内容）
+        if ($request->filled('keyword')) {
+            $query->where('contents', 'like', '%' . $request->keyword . '%');
+        }
+    
+        // 🔍 投稿者名検索（匿名を除外する）
+        if ($request->filled('user')) { // 🔹 フォームの name="user" に対応
+            $query->whereHas('user', function ($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->user . '%');
+            })->where('anonymize', '=', 0); // 🔹 匿名投稿を確実に除外
+        }
+    
+        // 🔍 日付検索（開始日 & 終了日）
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $query->whereBetween('created_at', [$request->start_date . ' 00:00:00', $request->end_date . ' 23:59:59']);
+        } elseif ($request->filled('start_date')) {
+            $query->whereDate('created_at', '>=', $request->start_date);
+        } elseif ($request->filled('end_date')) {
+            $query->whereDate('created_at', '<=', $request->end_date);
+        }
+    
+        // ✅ 検索結果を取得（新しい投稿が上にくるように）
+        $qas = $query->orderBy('created_at', 'desc')->paginate(10);
     
         return view('qas_index', compact('qas'));
     }
-    /*
-    public function qas()
-    {
-        $qas = Qa::with('user', 'target')->get();
-        return view('qas_create', compact('qas'));
-    }
-    */
+    
 
     // 教材一覧表示
     public function materials()

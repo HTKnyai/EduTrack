@@ -26,7 +26,7 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // ✅ 全ユーザー対象（Q&Aと教材）
-    Route::get('/qas', [DisplayController::class, 'qas_index']);
+    Route::get('/qas', [DisplayController::class, 'qas_index'])->name('qas_index');
     Route::get('/materials', [DisplayController::class, 'materials_index']);
     Route::post('/qas/store', [RegistrationController::class, 'storeQa'])->name('qas.store');
     Route::post('/materials/store', [RegistrationController::class, 'storeMaterial']);
