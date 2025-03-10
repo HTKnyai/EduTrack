@@ -23,11 +23,14 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['role:1'])->group(function () {
         Route::get('/students', [DisplayController::class, 'indexManagement'])->name('students.index');
         Route::get('/students/{id}/journals', [DisplayController::class, 'showStudentJournals'])->name('students.journals');
+        Route::post('/materials/store', [RegistrationController::class, 'storeMaterial'])->name('materials.store');
+        Route::put('/materials/{id}', [RegistrationController::class, 'updateMaterial'])->name('materials.update');
+        Route::delete('/materials/{id}', [RegistrationController::class, 'destroyMaterial'])->name('materials.destroy');
     });
 
     // ✅ 全ユーザー対象（Q&Aと教材）
     Route::get('/qas', [DisplayController::class, 'qas_index'])->name('qas_index');
     Route::get('/materials', [DisplayController::class, 'materials_index']);
     Route::post('/qas/store', [RegistrationController::class, 'storeQa'])->name('qas.store');
-    Route::post('/materials/store', [RegistrationController::class, 'storeMaterial']);
+    Route::get('/materials/download/{id}', [RegistrationController::class, 'downloadMaterial'])->name('materials.download');
 });

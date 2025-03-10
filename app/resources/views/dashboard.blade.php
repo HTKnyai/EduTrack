@@ -82,6 +82,7 @@
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     var ctx = document.getElementById('learningChart').getContext('2d');
+
     var chartData = {
         labels: {!! json_encode($weeklyData->pluck('date')->map(fn($date) => \Carbon\Carbon::parse($date)->format('m/d'))) !!},
         datasets: [{

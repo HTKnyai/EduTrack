@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth; 
+use Illuminate\Support\Facades\Storage;
 use App\Journal;
 use App\Qa;
+use App\Material;
 use Carbon\Carbon;
 
 class RegistrationController extends Controller
@@ -67,30 +69,91 @@ class RegistrationController extends Controller
     }
     */
     
-    // 教材新規登録
     public function storeMaterial(Request $request)
     {
         // バリデーション
         $request->validate([
             'title' => 'required|string|max:255',
-            'file' => 'required|file|mimes:pdf,doc,docx,ppt,pptx,txt|max:2048', // 許可するファイル形式とサイズ制限
+            'file' => 'required|file|mimes:pdf,doc,docx,ppt,pptx,txt|max:2048',
         ]);
-
-        // ファイルの保存
+    
+        // ファイルを保存（オリジナルのファイル名を維持）
         if ($request->hasFile('file')) {
-            $filePath = $request->file('file')->store('materials', 'public'); // storage/app/public/materials に保存
+            $fileName = $request->file('file')->getClientOriginalName(); // 元のファイル名
+            $filePath = $request->file('file')->storeAs('materials', $fileName, 'public'); // ファイル名を維持して保存
         } else {
             return back()->with('error', 'ファイルのアップロードに失敗しました');
         }
-
+    
         // データベースに保存
         Material::create([
-            'teacher_id' => auth()->id(), // 認証済みユーザーをアップロード者として設定
+            'teacher_id' => auth()->id(),
             'title' => $request->title,
-            'file_path' => 'storage/' . $filePath, // 公開ディレクトリからアクセスできるようにする
-            'dls' => 0, // 初期のダウンロード数は0
+            'file_path' => 'storage/materials/' . $fileName, // パスを適切に修正
+            'dls' => 0,
         ]);
-
+    
         return back()->with('success', '教材をアップロードしました');
+    }
+    
+    // 教材更新
+    public function updateMaterial(Request $request, $id)
+    {
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'file' => 'nullable|file|mimes:pdf,doc,docx,ppt,pptx,txt|max:2048',
+        ]);
+    
+        $material = Material::findOrFail($id);
+    
+        // 教材のタイトルを更新
+        $material->title = $request->title;
+    
+        // 新しいファイルがある場合は更新
+        if ($request->hasFile('file')) {
+            // 既存のファイルを削除
+            if ($material->file_path) {
+                Storage::delete(str_replace('storage/', 'public/', $material->file_path));
+            }
+            // 新しいファイルを保存
+            $filePath = $request->file('file')->store('materials', 'public');
+            $material->file_path = 'storage/' . $filePath;
+        }
+    
+        $material->save();
+    
+        return back()->with('success', '教材を更新しました');
+    }
+    
+    // 教材削除
+    public function destroyMaterial($id)
+    {
+        $material = Material::findOrFail($id);
+    
+        // ファイル削除
+        if ($material->file_path) {
+            Storage::delete(str_replace('storage/', 'public/', $material->file_path));
+        }
+    
+        $material->delete();
+    
+        return back()->with('success', '教材を削除しました');
+    }
+
+    public function downloadMaterial($id)
+    {
+        $material = Material::findOrFail($id);
+        $filePath = str_replace('storage/', 'public/', $material->file_path); // 正しいパスに修正
+    
+        if (Storage::exists($filePath)) {
+            // ダウンロード数をカウント
+            $material->increment('dls');
+    
+            // オリジナルのファイル名でダウンロード
+            $originalFileName = basename($material->file_path); // ファイル名取得
+            return Storage::download($filePath, $originalFileName);
+        }
+    
+        return back()->with('error', 'ファイルが見つかりません');
     }
 }

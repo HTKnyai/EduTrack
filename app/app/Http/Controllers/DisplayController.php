@@ -15,29 +15,39 @@ class DisplayController extends Controller
 {
     public function index()
     {
-    // 直近7日間の学習データ（日ごとに合計）
-    $weeklyData = Journal::where('start_time', '>=', Carbon::now()->subDays(7))
-        ->selectRaw('DATE(start_time) as date, SUM(duration) as total_duration')
-        ->groupBy('date')
-        ->orderBy('date', 'asc')
-        ->get();
-
-    // 前日の学習記録（複数ある場合も合計）
-    $yesterday = Carbon::yesterday();
-    $yesterdayJournal = Journal::whereDate('start_time', $yesterday)
-        ->selectRaw('SUM(duration) as total_duration, GROUP_CONCAT(learnings SEPARATOR ", ") as learnings, GROUP_CONCAT(questions SEPARATOR ", ") as questions')
-        ->first();
-  
-    // **質問のみ（target_id = 0）を直近5件取得**
-    $qas = Qa::with('user')
-        ->where('target_id', 0)  // 回答を除外（新規質問のみ）
-        ->latest()
-        ->take(5)
-        ->get();
-
+        $user = auth()->user();
+    
+        if ($user->role === 0) { // 👈 生徒のみデータ取得
+            // 直近7日間の学習データ（日ごとに合計）
+            $weeklyData = Journal::where('user_id', $user->id)
+                ->where('start_time', '>=', Carbon::now()->subDays(7))
+                ->selectRaw('DATE(start_time) as date, SUM(duration) as total_duration')
+                ->groupBy('date')
+                ->orderBy('date', 'asc')
+                ->get();
+    
+            // 前日の学習記録（複数ある場合も合計）
+            $yesterday = Carbon::yesterday();
+            $yesterdayJournal = Journal::where('user_id', $user->id)
+                ->whereDate('start_time', $yesterday)
+                ->selectRaw('SUM(duration) as total_duration, GROUP_CONCAT(learnings SEPARATOR ", ") as learnings, GROUP_CONCAT(questions SEPARATOR ", ") as questions')
+                ->first();
+        } else {
+            // 教師の場合は生徒のデータは不要
+            $weeklyData = collect([]);
+            $yesterdayJournal = null;
+        }
+    
+        // **質問のみ（target_id = 0）を直近5件取得**
+        $qas = Qa::with('user')
+            ->where('target_id', 0)
+            ->latest()
+            ->take(5)
+            ->get();
+    
         // 直近の教材 5件
         $materials = Material::with('teacher')->latest()->take(5)->get();
-
+    
         return view('dashboard', compact('weeklyData', 'qas', 'materials', 'yesterdayJournal'));
     }
 
