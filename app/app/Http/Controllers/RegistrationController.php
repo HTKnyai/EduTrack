@@ -99,30 +99,32 @@ class RegistrationController extends Controller
     // 教材更新
     public function updateMaterial(Request $request, $id)
     {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'file' => 'nullable|file|mimes:pdf,doc,docx,ppt,pptx,txt|max:2048',
-        ]);
-    
         $material = Material::findOrFail($id);
     
-        // 教材のタイトルを更新
-        $material->title = $request->title;
+        // バリデーション
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'file' => 'nullable|file|mimes:pdf,doc,docx,ppt,pptx,txt|max:2048', // ファイルは任意
+        ]);
     
-        // 新しいファイルがある場合は更新
+        // ファイルがアップロードされた場合
         if ($request->hasFile('file')) {
-            // 既存のファイルを削除
-            if ($material->file_path) {
-                Storage::delete(str_replace('storage/', 'public/', $material->file_path));
-            }
+            // 以前のファイルを削除
+            Storage::disk('public')->delete($material->file_path);
+    
             // 新しいファイルを保存
-            $filePath = $request->file('file')->store('materials', 'public');
+            $originalFilename = $request->file('file')->getClientOriginalName(); // 元のファイル名を取得
+            $filePath = $request->file('file')->storeAs('materials', $originalFilename, 'public');
+    
+            // ファイルパスを更新
             $material->file_path = 'storage/' . $filePath;
         }
     
+        // タイトルを更新
+        $material->title = $request->title;
         $material->save();
     
-        return back()->with('success', '教材を更新しました');
+        return redirect()->route('materials.index')->with('success', '教材が更新されました');
     }
     
     // 教材削除
@@ -143,17 +145,17 @@ class RegistrationController extends Controller
     public function downloadMaterial($id)
     {
         $material = Material::findOrFail($id);
-        $filePath = str_replace('storage/', 'public/', $material->file_path); // 正しいパスに修正
     
-        if (Storage::exists($filePath)) {
-            // ダウンロード数をカウント
-            $material->increment('dls');
+        // ダウンロード数を更新
+        $material->increment('dls');
     
-            // オリジナルのファイル名でダウンロード
-            $originalFileName = basename($material->file_path); // ファイル名取得
-            return Storage::download($filePath, $originalFileName);
-        }
+        // ファイルパス取得
+        $filePath = storage_path('app/public/' . str_replace('storage/', '', $material->file_path));
     
-        return back()->with('error', 'ファイルが見つかりません');
+        // ファイル名を取得
+        $fileName = basename($material->file_path);
+    
+        // ファイルをダウンロード
+        return response()->download($filePath, $fileName);
     }
 }
