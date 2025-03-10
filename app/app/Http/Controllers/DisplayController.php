@@ -212,43 +212,54 @@ public function journals()
         return view('journals_create', compact('journals', 'weeklyData'));
     }
 
-public function indexManagement(Request $request)
-{
-    // 検索処理
-    $query = User::where('role', 0); // 生徒のみ
-
-    if ($request->filled('search')) {
-        $query->where('name', 'like', '%' . $request->search . '%');
+    public function indexManagement(Request $request)
+    {
+        // 生徒のみを取得
+        $query = User::where('role', 0);
+    
+        // 🔍 生徒名検索
+        if ($request->filled('search')) {
+            $query->where('name', 'like', '%' . $request->search . '%');
+        }
+    
+        $students = $query->get();
+    
+        // 生徒ごとのデータ取得
+        $studentData = $students->map(function ($student) use ($request) {
+            // 平均学習時間（過去7日間）
+            $averageDuration = Journal::where('user_id', $student->id)
+                ->where('start_time', '>=', Carbon::now()->subDays(7))
+                ->avg('duration');
+    
+            // 🔍 学習目標・学習内容・疑問の検索
+            $yesterdayJournalQuery = Journal::where('user_id', $student->id)
+                ->whereDate('start_time', Carbon::yesterday());
+    
+            if ($request->filled('goal')) {
+                $yesterdayJournalQuery->where('goals', 'like', '%' . $request->goal . '%');
+            }
+            if ($request->filled('learning')) {
+                $yesterdayJournalQuery->where('learnings', 'like', '%' . $request->learning . '%');
+            }
+            if ($request->filled('question')) {
+                $yesterdayJournalQuery->where('questions', 'like', '%' . $request->question . '%');
+            }
+    
+            $yesterdayJournal = $yesterdayJournalQuery->orderBy('start_time', 'desc')->first();
+    
+            return [
+                'id' => $student->id,
+                'name' => $student->name,
+                'averageDuration' => round($averageDuration / 60, 1) . ' 分',
+                'yesterdayDuration' => round(optional($yesterdayJournal)->duration / 60, 1) . ' 分',
+                'yesterdayGoals' => optional($yesterdayJournal)->goals ?? 'なし',
+                'yesterdayLearnings' => optional($yesterdayJournal)->learnings ?? 'なし',
+                'yesterdayQuestions' => optional($yesterdayJournal)->questions ?? 'なし',
+            ];
+        });
+    
+        return view('students_index', compact('studentData'));
     }
-
-    $students = $query->get();
-
-    // 生徒ごとのデータ取得
-    $studentData = $students->map(function ($student) {
-        // 平均学習時間（過去7日間）
-        $averageDuration = Journal::where('user_id', $student->id)
-            ->where('start_time', '>=', Carbon::now()->subDays(7))
-            ->avg('duration');
-
-        // 昨日の学習時間合計 & 学習記録
-        $yesterdayJournal = Journal::where('user_id', $student->id)
-            ->whereDate('start_time', Carbon::yesterday())
-            ->orderBy('start_time', 'desc')
-            ->first();
-
-        return [
-            'id' => $student->id,
-            'name' => $student->name,
-            'averageDuration' => round($averageDuration / 60, 1) . ' 分',
-            'yesterdayDuration' => round(optional($yesterdayJournal)->duration / 60, 1) . ' 分',
-            'yesterdayGoals' => optional($yesterdayJournal)->goals ?? 'なし',
-            'yesterdayLearnings' => optional($yesterdayJournal)->learnings ?? 'なし',
-            'yesterdayQuestions' => optional($yesterdayJournal)->questions ?? 'なし',
-        ];
-    });
-
-    return view('students_index', compact('studentData'));
-}
 
 public function showStudentJournals($id, Request $request)
 {

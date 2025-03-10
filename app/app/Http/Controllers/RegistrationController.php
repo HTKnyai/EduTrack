@@ -37,6 +37,35 @@ class RegistrationController extends Controller
         return redirect('/journals')->with('success', '学習ジャーナルが追加されました！');
     }
     
+    public function updateStudentJournal(Request $request, $id)
+    {
+        $journal = Journal::findOrFail($id);
+    
+        // バリデーション
+        $request->validate([
+            'goals' => 'required|string|max:255',
+            'learnings' => 'required|string|max:255',
+            'questions' => 'nullable|string|max:255',
+        ]);
+    
+        // データ更新
+        $journal->update([
+            'goals' => $request->goals,
+            'learnings' => $request->learnings,
+            'questions' => $request->questions,
+        ]);
+    
+        return redirect()->route('students.journals', $journal->user_id)->with('success', '学習ジャーナルが更新されました');
+    }
+    
+    public function destroyStudentJournal($id)
+    {
+        $journal = Journal::findOrFail($id);
+        
+        $journal->delete();
+    
+        return redirect()->back()->with('success', '学習ジャーナルが削除されました');
+    }    
 
     // Q&A新規登録
     public function storeQa(Request $request)

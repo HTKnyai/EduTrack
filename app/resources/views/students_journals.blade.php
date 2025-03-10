@@ -36,6 +36,7 @@
                 <th>学習目標</th>
                 <th>学習内容</th>
                 <th>質問</th>
+                <th>操作</th>
             </tr>
         </thead>
         <tbody>
@@ -47,7 +48,50 @@
                 <td>{{ $journal->goals }}</td>
                 <td>{{ $journal->learnings }}</td>
                 <td>{{ $journal->questions }}</td>
+                <td>
+                   <!-- 編集ボタン -->
+                    <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editJournalModal{{ $journal->id }}">編集</button>
+
+                    <!-- 削除ボタン -->
+                    <form action="{{ route('students.journals.destroy', $journal->id) }}" method="POST" class="d-inline">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('本当に削除しますか？')">削除</button>
+                    </form>
+                </td>
             </tr>
+
+
+            <!-- 編集用モーダル -->
+            <div class="modal fade" id="editJournalModal{{ $journal->id }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">学習ジャーナルを編集</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form action="{{ route('students.journals.update', $journal->id) }}" method="POST">
+                                @csrf
+                                @method('PUT')
+                                <div class="mb-3">
+                                    <label class="form-label">学習目標</label>
+                                    <input type="text" name="goals" class="form-control" value="{{ $journal->goals }}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">学習内容</label>
+                                    <textarea name="learnings" class="form-control" required>{{ $journal->learnings }}</textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">疑問点</label>
+                                    <textarea name="questions" class="form-control">{{ $journal->questions }}</textarea>
+                                </div>
+                                <button type="submit" class="btn btn-warning">更新</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
             @endforeach
         </tbody>
     </table>
