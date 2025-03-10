@@ -170,26 +170,47 @@ public function journals()
         return view('qas_index', compact('qas'));
     }
    */
-    public function materials_index() 
-    {
-        $materials = Material::with('teacher')->get();
-        return view('materials_index', compact('materials'));
-    }
+  public function materials_index(Request $request) 
+  {
+      $query = Material::with('teacher');
+  
+      // 🔍 キーワード検索（タイトル）
+      if ($request->filled('keyword')) {
+          $query->where('title', 'like', '%' . $request->keyword . '%');
+      }
+  
+      // 📅 期間検索（作成日）
+      if ($request->filled('start_date') && $request->filled('end_date')) {
+          $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
+      }
+  
+      // 👤 投稿者検索（教師名）
+      if ($request->filled('teacher')) {
+          $query->whereHas('teacher', function ($q) use ($request) {
+              $q->where('name', 'like', '%' . $request->teacher . '%');
+          });
+      }
+  
+      // ✅ ページネーション適用（10件ずつ表示）
+      $materials = $query->orderBy('created_at', 'desc')->paginate(10);
+  
+      return view('materials_index', compact('materials'));
+  }
     
     public function journals_create()
-{
-    $journals = Journal::with('user')->orderBy('start_time', 'desc')->get();
+    {
+        $journals = Journal::with('user')->orderBy('start_time', 'desc')->get();
 
-    // 直近1週間分のデータを取得し、日ごとの合計学習時間を計算
-    $oneWeekAgo = Carbon::now()->subDays(7)->startOfDay();
-    $weeklyData = Journal::where('start_time', '>=', $oneWeekAgo)
-        ->selectRaw('DATE(start_time) as date, SUM(duration) as total_duration')
-        ->groupBy('date')
-        ->orderBy('date', 'asc')
-        ->get();
+        // 直近1週間分のデータを取得し、日ごとの合計学習時間を計算
+        $oneWeekAgo = Carbon::now()->subDays(7)->startOfDay();
+        $weeklyData = Journal::where('start_time', '>=', $oneWeekAgo)
+            ->selectRaw('DATE(start_time) as date, SUM(duration) as total_duration')
+            ->groupBy('date')
+            ->orderBy('date', 'asc')
+            ->get();
 
-    return view('journals_create', compact('journals', 'weeklyData'));
-}
+        return view('journals_create', compact('journals', 'weeklyData'));
+    }
 
 public function indexManagement(Request $request)
 {

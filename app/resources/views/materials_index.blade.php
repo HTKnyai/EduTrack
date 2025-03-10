@@ -4,6 +4,31 @@
 <div class="container">
     <h2>教材一覧</h2>
 
+    <!-- 🔍 検索フォーム -->
+    <form action="{{ route('materials.index') }}" method="GET" class="mb-3">
+        <div class="row">
+            <div class="col-md-3">
+                <label>キーワード検索:</label>
+                <input type="text" name="keyword" class="form-control" placeholder="例: 数学" value="{{ request('keyword') }}">
+            </div>
+            <div class="col-md-3">
+                <label>投稿者（教師）:</label>
+                <input type="text" name="teacher" class="form-control" placeholder="教師名" value="{{ request('teacher') }}">
+            </div>
+            <div class="col-md-3">
+                <label>検索：（開始日）</label>
+                <input type="date" name="start_date" class="form-control" value="{{ request('start_date') }}">
+            </div>
+            <div class="col-md-3">
+                <label>検索：（終了日）</label>
+                <input type="date" name="end_date" class="form-control" value="{{ request('end_date') }}">
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">検索</button>
+            </div>
+        </div>
+    </form>
+
     @if(auth()->user()->role == 1)  <!-- 1: 教師 -->
         <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#materialModal">教材をアップロード</button>
 
@@ -34,13 +59,15 @@
         </div>
     @endif
 
-    <!-- 教材一覧テーブル -->
+    <!-- 📄 教材一覧テーブル -->
     <table class="table">
         <thead>
             <tr>
                 <th>タイトル</th>
                 <th>アップロード者</th>
                 <th>ダウンロード数</th>
+                <th>アップロード日</th>
+                <th>更新日</th>
                 <th>操作</th>
             </tr>
         </thead>
@@ -50,8 +77,10 @@
                 <td>{{ $material->title }}</td>
                 <td>{{ $material->teacher->name }}</td>
                 <td>{{ $material->dls }}</td>
+                <td>{{ $material->created_at->format('Y-m-d H:i') }}</td> <!-- アップロード日時 -->
+                <td>{{ $material->updated_at->format('Y-m-d H:i') }}</td> <!-- 更新日時 -->
                 <td>
-                <a href="{{ route('materials.download', $material->id) }}" class="btn btn-primary">ダウンロード</a>
+                    <a href="{{ route('materials.download', $material->id) }}" class="btn btn-primary">ダウンロード</a>
                     
                     @if(auth()->user()->role == 1)  <!-- 教師のみ -->
                         <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editMaterialModal{{ $material->id }}">編集</button>
@@ -95,6 +124,11 @@
             @endforeach
         </tbody>
     </table>
+
+    <!-- 📌 ページネーション -->
+    <div class="d-flex justify-content-center mt-3">
+        {{ $materials->appends(request()->query())->links() }}
+    </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
