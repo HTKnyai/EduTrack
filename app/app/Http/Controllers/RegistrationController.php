@@ -68,6 +68,43 @@ class RegistrationController extends Controller
         return redirect('/qas')->with('success', '質問を投稿しました！');
     }
     */
+
+    public function updateQa(Request $request, $id)
+    {
+        $qa = Qa::findOrFail($id);
+    
+        // ✅ 自分の投稿のみ編集可能
+        if ($qa->user_id !== Auth::id()) {
+            return redirect()->route('qas_index')->with('error', '編集権限がありません');
+        }
+    
+        // バリデーション
+        $request->validate([
+            'contents' => 'required|string|max:500',
+        ]);
+    
+        // データ更新
+        $qa->update([
+            'contents' => $request->contents,
+        ]);
+    
+        return redirect()->route('qas_index')->with('success', '質問が更新されました');
+    }
+    
+    public function destroyQa($id)
+    {
+        $qa = Qa::findOrFail($id);
+    
+        // ✅ 自分の投稿のみ削除可能
+        if ($qa->user_id !== Auth::id()) {
+            return redirect()->route('qas_index')->with('error', '削除権限がありません');
+        }
+    
+        // 削除
+        $qa->delete();
+    
+        return redirect()->route('qas_index')->with('success', '質問が削除されました');
+    }
     
     public function storeMaterial(Request $request)
     {

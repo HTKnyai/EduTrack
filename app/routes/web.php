@@ -31,7 +31,10 @@ Route::middleware(['auth'])->group(function () {
 
     // ✅ 全ユーザー対象（Q&Aと教材）
     Route::get('/qas', [DisplayController::class, 'qas_index'])->name('qas_index');
-    Route::get('/materials', [DisplayController::class, 'materials_index'])->name('materials.index'); // 
     Route::post('/qas/store', [RegistrationController::class, 'storeQa'])->name('qas.store');
+    Route::put('/qas/{id}', [RegistrationController::class, 'updateQa'])->name('qas.update');
+    Route::delete('/qas/{id}', [RegistrationController::class, 'destroyQa'])->name('qas.destroy');
+
+    Route::get('/materials', [DisplayController::class, 'materials_index'])->name('materials.index'); 
     Route::get('/materials/download/{id}', [RegistrationController::class, 'downloadMaterial'])->name('materials.download');
 });

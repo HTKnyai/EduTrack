@@ -1,135 +1,104 @@
 @extends('layouts.app')
 
+@section('title', 'Q&A（質問掲示板）')
+
 @section('content')
 <div class="container">
-    <h2>教材一覧</h2>
+    <h2>Q&A（質問掲示板）</h2>
 
-    <!-- 🔍 検索フォーム -->
-    <form action="{{ route('materials.index') }}" method="GET" class="mb-3">
-        <div class="row">
-            <div class="col-md-3">
-                <label>キーワード検索:</label>
-                <input type="text" name="keyword" class="form-control" placeholder="例: 数学" value="{{ request('keyword') }}">
-            </div>
-            <div class="col-md-3">
-                <label>投稿者（教師）:</label>
-                <input type="text" name="teacher" class="form-control" placeholder="教師名" value="{{ request('teacher') }}">
-            </div>
-            <div class="col-md-3">
-                <label>検索：（開始日）</label>
-                <input type="date" name="start_date" class="form-control" value="{{ request('start_date') }}">
-            </div>
-            <div class="col-md-3">
-                <label>検索：（終了日）</label>
-                <input type="date" name="end_date" class="form-control" value="{{ request('end_date') }}">
-            </div>
-            <div class="col-md-2 d-flex align-items-end">
-                <button type="submit" class="btn btn-primary w-100">検索</button>
-            </div>
-        </div>
-    </form>
+    <!-- 🔹 質問投稿ボタン -->
+    <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#qaModal">投稿</button>
 
-    @if(auth()->user()->role == 1)  <!-- 1: 教師 -->
-        <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#materialModal">教材をアップロード</button>
-
-        <!-- 教材アップロードモーダル -->
-        <div class="modal fade" id="materialModal" tabindex="-1" aria-labelledby="materialModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="materialModalLabel">教材をアップロード</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <form action="{{ route('materials.store') }}" method="POST" enctype="multipart/form-data">
-                            @csrf
-                            <div class="mb-3">
-                                <label class="form-label">タイトル</label>
-                                <input type="text" name="title" class="form-control" required>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">ファイル</label>
-                                <input type="file" name="file" class="form-control" required>
-                            </div>
-                            <button type="submit" class="btn btn-primary">登録</button>
-                        </form>
-                    </div>
+    <!-- ✏ 質問投稿モーダル -->
+    <div class="modal fade" id="qaModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">質問を投稿</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form action="{{ route('qas.store') }}" method="POST">
+                        @csrf
+                        <div class="mb-3">
+                            <label class="form-label">内容</label>
+                            <textarea name="contents" class="form-control" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">新規/回答対象</label>
+                            <select name="target_id" class="form-select">
+                                <option value="0">新規質問</option>
+                                @foreach($qas as $qa)
+                                    <option value="{{ $qa->id }}">{{ Str::limit($qa->contents, 30) }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="anonymize" name="anonymize" value="1">
+                            <label class="form-check-label" for="anonymize">匿名で投稿</label>
+                        </div>
+                        <button type="submit" class="btn btn-primary">投稿</button>
+                    </form>
                 </div>
             </div>
         </div>
-    @endif
+    </div>
 
-    <!-- 📄 教材一覧テーブル -->
-    <table class="table">
-        <thead>
-            <tr>
-                <th>タイトル</th>
-                <th>アップロード者</th>
-                <th>ダウンロード数</th>
-                <th>アップロード日</th>
-                <th>更新日</th>
-                <th>操作</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($materials as $material)
-            <tr>
-                <td>{{ $material->title }}</td>
-                <td>{{ $material->teacher->name }}</td>
-                <td>{{ $material->dls }}</td>
-                <td>{{ $material->created_at->format('Y-m-d H:i') }}</td> <!-- アップロード日時 -->
-                <td>{{ $material->updated_at->format('Y-m-d H:i') }}</td> <!-- 更新日時 -->
-                <td>
-                    <a href="{{ route('materials.download', $material->id) }}" class="btn btn-primary">ダウンロード</a>
-                    
-                    @if(auth()->user()->role == 1)  <!-- 教師のみ -->
-                        <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editMaterialModal{{ $material->id }}">編集</button>
+    <!-- 📄 質問一覧（ツリー形式） -->
+    <div class="mt-4">
+        <ul class="list-group">
+            @foreach($qas->where('target_id', 0) as $qa)
+                <li class="list-group-item">
+                    <strong>
+                        @if($qa->anonymize) 匿名 @else {{ $qa->user->name }} @endif
+                    </strong>:
+                    {{ $qa->contents }}
+                    <span class="text-muted">（{{ $qa->created_at->format('Y-m-d H:i') }}）</span>
 
-                        <form action="{{ route('materials.destroy', $material->id) }}" method="POST" class="d-inline">
+                    <!-- ✏ 編集・削除ボタン（自分の投稿のみ） -->
+                    @if(auth()->id() == $qa->user_id)
+                        <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editQaModal{{ $qa->id }}">編集</button>
+                        <form action="{{ route('qas.destroy', $qa->id) }}" method="POST" class="d-inline">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="btn btn-danger" onclick="return confirm('本当に削除しますか？')">削除</button>
+                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('本当に削除しますか？')">削除</button>
                         </form>
                     @endif
-                </td>
-            </tr>
 
-            <!-- 教材編集モーダル -->
-            <div class="modal fade" id="editMaterialModal{{ $material->id }}" tabindex="-1" aria-labelledby="editMaterialModalLabel" aria-hidden="true">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">教材を編集</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <form action="{{ route('materials.update', $material->id) }}" method="POST" enctype="multipart/form-data">
-                                @csrf
-                                @method('PUT')
-                                <div class="mb-3">
-                                    <label class="form-label">タイトル</label>
-                                    <input type="text" name="title" class="form-control" value="{{ $material->title }}" required>
+                    <!-- 編集用モーダル -->
+                    <div class="modal fade" id="editQaModal{{ $qa->id }}" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">質問を編集</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                 </div>
-                                <div class="mb-3">
-                                    <label class="form-label">新しいファイル（任意）</label>
-                                    <input type="file" name="file" class="form-control">
+                                <div class="modal-body">
+                                    <form action="{{ route('qas.update', $qa->id) }}" method="POST">
+                                        @csrf
+                                        @method('PUT')
+                                        <div class="mb-3">
+                                            <label class="form-label">内容</label>
+                                            <textarea name="contents" class="form-control" required>{{ $qa->contents }}</textarea>
+                                        </div>
+                                        <button type="submit" class="btn btn-warning">更新</button>
+                                    </form>
                                 </div>
-                                <button type="submit" class="btn btn-warning">更新</button>
-                            </form>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
 
+                    <!-- 📌 回答一覧 -->
+                    @if($qa->replies->count() > 0)
+                        <ul class="list-group mt-2">
+                            @foreach($qa->replies as $reply)
+                                @include('qa_reply', ['reply' => $reply])
+                            @endforeach
+                        </ul>
+                    @endif
+                </li>
             @endforeach
-        </tbody>
-    </table>
-
-    <!-- 📌 ページネーション -->
-    <div class="d-flex justify-content-center mt-3">
-        {{ $materials->appends(request()->query())->links() }}
+        </ul>
     </div>
 </div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 @endsection
