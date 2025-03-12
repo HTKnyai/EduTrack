@@ -43,13 +43,23 @@ class RegistrationController extends Controller
     
         // バリデーション
         $request->validate([
+            'start_time' => 'required|date_format:Y-m-d\TH:i',
+            'end_time' => 'required|date_format:Y-m-d\TH:i|after:start_time',
             'goals' => 'required|string|max:255',
             'learnings' => 'required|string|max:255',
             'questions' => 'nullable|string|max:255',
         ]);
     
+        // 学習時間を自動計算
+        $startTime = Carbon::parse($request->start_time);
+        $endTime = Carbon::parse($request->end_time);
+        $duration = $endTime->diffInSeconds($startTime); // 秒単位の計算
+    
         // データ更新
         $journal->update([
+            'start_time' => $startTime,
+            'end_time' => $endTime,
+            'duration' => $duration,
             'goals' => $request->goals,
             'learnings' => $request->learnings,
             'questions' => $request->questions,

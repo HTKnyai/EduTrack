@@ -3,6 +3,9 @@
 @section('title', '生徒の学習ジャーナル')
 
 @section('content')
+@php
+    use Carbon\Carbon;
+@endphp
 <div class="container">
     <h2>{{ $student->name }} の学習ジャーナル</h2>
 
@@ -61,7 +64,6 @@
                 </td>
             </tr>
 
-
             <!-- 編集用モーダル -->
             <div class="modal fade" id="editJournalModal{{ $journal->id }}" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog">
@@ -74,6 +76,19 @@
                             <form action="{{ route('students.journals.update', $journal->id) }}" method="POST">
                                 @csrf
                                 @method('PUT')
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">開始時間</label>
+                                    <input type="datetime-local" name="start_time" class="form-control" 
+                                        value="{{ Carbon::parse($journal->start_time)->format('Y-m-d\TH:i') }}" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">終了時間</label>
+                                    <input type="datetime-local" name="end_time" class="form-control" 
+                                        value="{{ Carbon::parse($journal->end_time)->format('Y-m-d\TH:i') }}" required>
+                                </div>
+
                                 <div class="mb-3">
                                     <label class="form-label">学習目標</label>
                                     <input type="text" name="goals" class="form-control" value="{{ $journal->goals }}" required>
@@ -86,6 +101,7 @@
                                     <label class="form-label">疑問点</label>
                                     <textarea name="questions" class="form-control">{{ $journal->questions }}</textarea>
                                 </div>
+
                                 <button type="submit" class="btn btn-warning">更新</button>
                             </form>
                         </div>

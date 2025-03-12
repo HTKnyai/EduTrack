@@ -21,10 +21,10 @@ Route::middleware(['auth'])->group(function () {
 
     // ✅ 教師専用（生徒管理）
     Route::middleware(['role:1'])->group(function () {
-Route::get('/students', [DisplayController::class, 'indexManagement'])->name('students.index');
-    Route::get('/students/{id}/journals', [DisplayController::class, 'showStudentJournals'])->name('students.journals');
-    Route::put('/students/journals/{id}', [RegistrationController::class, 'updateStudentJournal'])->name('students.journals.update'); // 修正
-    Route::delete('/students/journals/{id}', [RegistrationController::class, 'destroyStudentJournal'])->name('students.journals.destroy'); // 修正
+        Route::get('/students', [DisplayController::class, 'indexManagement'])->name('students.index');
+        Route::get('/students/{id}/journals', [DisplayController::class, 'showStudentJournals'])->name('students.journals');
+        Route::put('/students/journals/{id}', [RegistrationController::class, 'updateStudentJournal'])->name('students.journals.update');
+        Route::delete('/students/journals/{id}', [RegistrationController::class, 'destroyStudentJournal'])->name('students.journals.destroy'); // 修正
         Route::post('/materials/store', [RegistrationController::class, 'storeMaterial'])->name('materials.store');
         Route::put('/materials/{id}', [RegistrationController::class, 'updateMaterial'])->name('materials.update');
         Route::delete('/materials/{id}', [RegistrationController::class, 'destroyMaterial'])->name('materials.destroy');

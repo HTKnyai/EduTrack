@@ -17,7 +17,7 @@ class DisplayController extends Controller
     {
         $user = auth()->user();
     
-        if ($user->role === 0) { // 👈 生徒のみデータ取得
+        if ($user->role === 0) { // 生徒のみデータ取得
             // 直近7日間の学習データ（日ごとに合計）
             $weeklyData = Journal::where('user_id', $user->id)
                 ->where('start_time', '>=', Carbon::now()->subDays(7))
@@ -90,19 +90,19 @@ public function journals()
     {
         $query = Qa::with(['user', 'target', 'replies']);
     
-        // 🔍 キーワード検索（質問・回答の内容）
+        // キーワード検索（質問・回答の内容）
         if ($request->filled('keyword')) {
             $query->where('contents', 'like', '%' . $request->keyword . '%');
         }
     
-        // 🔍 投稿者名検索（匿名を除外する）
+        // 投稿者名検索（匿名を除外する）
         if ($request->filled('user')) { // 🔹 フォームの name="user" に対応
             $query->whereHas('user', function ($q) use ($request) {
                 $q->where('name', 'like', '%' . $request->user . '%');
             })->where('anonymize', '=', 0); // 🔹 匿名投稿を確実に除外
         }
     
-        // 🔍 日付検索（開始日 & 終了日）
+        // 日付検索（開始日 & 終了日）
         if ($request->filled('start_date') && $request->filled('end_date')) {
             $query->whereBetween('created_at', [$request->start_date . ' 00:00:00', $request->end_date . ' 23:59:59']);
         } elseif ($request->filled('start_date')) {
@@ -111,7 +111,7 @@ public function journals()
             $query->whereDate('created_at', '<=', $request->end_date);
         }
     
-        // ✅ 検索結果を取得（新しい投稿が上にくるように）
+        // 検索結果を取得（新しい投稿が上にくるように）
         $qas = $query->orderBy('created_at', 'desc')->paginate(10);
     
         return view('qas_index', compact('qas'));
@@ -133,12 +133,12 @@ public function journals()
         // 自分のジャーナルのみ取得
         $query = Journal::where('user_id', $userId);
     
-        // ✅ 日付フィルター適用
+        // 日付フィルター適用
         if ($request->filled('start_date') && $request->filled('end_date')) {
             $query->whereBetween('start_time', [$request->start_date, $request->end_date]);
         }
     
-        // ✅ キーワード検索（学習内容・目標・疑問のいずれか）
+        // キーワード検索（学習内容・目標・疑問のいずれか）
         if ($request->filled('keyword')) {
             $keyword = $request->keyword;
             $query->where(function ($q) use ($keyword) {
@@ -148,10 +148,10 @@ public function journals()
             });
         }
     
-        // ✅ ページネーション適用 (10件ずつ)
+        // ページネーション適用 (10件ずつ)
         $journals = $query->orderBy('start_time', 'desc')->paginate(10);
     
-        // ✅ 直近1週間分のデータを取得し、日ごとの合計学習時間を計算
+        // 直近1週間分のデータを取得し、日ごとの合計学習時間を計算
         $oneWeekAgo = Carbon::now()->subDays(7)->startOfDay();
         $weeklyData = Journal::where('user_id', $userId) // 👈 自分のデータのみ
             ->where('start_time', '>=', $oneWeekAgo)
@@ -174,24 +174,24 @@ public function journals()
   {
       $query = Material::with('teacher');
   
-      // 🔍 キーワード検索（タイトル）
+      // キーワード検索（タイトル）
       if ($request->filled('keyword')) {
           $query->where('title', 'like', '%' . $request->keyword . '%');
       }
   
-      // 📅 期間検索（作成日）
+      // 期間検索（作成日）
       if ($request->filled('start_date') && $request->filled('end_date')) {
           $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
       }
   
-      // 👤 投稿者検索（教師名）
+      // 投稿者検索（教師名）
       if ($request->filled('teacher')) {
           $query->whereHas('teacher', function ($q) use ($request) {
               $q->where('name', 'like', '%' . $request->teacher . '%');
           });
       }
   
-      // ✅ ページネーション適用（10件ずつ表示）
+      // ページネーション適用（10件ずつ）
       $materials = $query->orderBy('created_at', 'desc')->paginate(10);
   
       return view('materials_index', compact('materials'));
@@ -217,7 +217,7 @@ public function journals()
         // 生徒のみを取得
         $query = User::where('role', 0);
     
-        // 🔍 生徒名検索
+        // 生徒名検索
         if ($request->filled('search')) {
             $query->where('name', 'like', '%' . $request->search . '%');
         }
@@ -231,7 +231,7 @@ public function journals()
                 ->where('start_time', '>=', Carbon::now()->subDays(7))
                 ->avg('duration');
     
-            // 🔍 学習目標・学習内容・疑問の検索
+            // 学習目標・学習内容・疑問の検索
             $yesterdayJournalQuery = Journal::where('user_id', $student->id)
                 ->whereDate('start_time', Carbon::yesterday());
     
