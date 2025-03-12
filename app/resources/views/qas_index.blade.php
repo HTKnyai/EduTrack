@@ -34,6 +34,42 @@
         </div>
     </form>
 
+    <!-- ✏ 質問投稿モーダル -->
+    <div class="modal fade" id="qaModal" tabindex="-1" aria-labelledby="qaModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="qaModalLabel">質問を投稿</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form action="{{ route('qas.store') }}" method="POST">
+                        @csrf
+                        <div class="mb-3">
+                            <label class="form-label">内容</label>
+                            <textarea name="contents" class="form-control" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">新規/回答対象</label>
+                            <input type="text" id="qaSearch" class="form-control" placeholder="質問を検索">
+                            <select name="target_id" class="form-select mt-2" id="qaSelect">
+                                <option value="0">新規質問</option>
+                                @foreach($qas as $qa)
+                                    <option value="{{ $qa->id }}">{{ Str::limit($qa->contents, 30) }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="anonymize" name="anonymize" value="1">
+                            <label class="form-check-label" for="anonymize">匿名で投稿</label>
+                        </div>
+                        <button type="submit" class="btn btn-primary">投稿</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 📄 質問一覧（ツリー形式） -->
     <div class="mt-4">
         <ul class="list-group">
@@ -96,4 +132,20 @@
         {{ $qas->appends(request()->query())->links() }}
     </div>
 </div>
+
+<!-- ✅ 検索用スクリプト -->
+<script>
+document.getElementById('qaSearch').addEventListener('input', function() {
+    let filter = this.value.toLowerCase();
+    let options = document.getElementById('qaSelect').options;
+
+    for (let i = 0; i < options.length; i++) {
+        let text = options[i].text.toLowerCase();
+        options[i].style.display = text.includes(filter) ? "" : "none";
+    }
+});
+</script>
+
+<!-- Bootstrapのスクリプト -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 @endsection

@@ -90,19 +90,22 @@ public function journals()
     {
         $query = Qa::with(['user', 'target', 'replies']);
     
-        // キーワード検索（質問・回答の内容）
+        // 🔍 キーワード検索（質問・回答の内容）
         if ($request->filled('keyword')) {
-            $query->where('contents', 'like', '%' . $request->keyword . '%');
+            $query->where('contents', 'like', '%' . $request->keyword . '%')
+                  ->orWhereHas('replies', function ($q) use ($request) {
+                      $q->where('contents', 'like', '%' . $request->keyword . '%');
+                  });
         }
     
-        // 投稿者名検索（匿名を除外する）
-        if ($request->filled('user')) { // 🔹 フォームの name="user" に対応
+        // 🔍 投稿者名検索（匿名を除外する）
+        if ($request->filled('user')) {
             $query->whereHas('user', function ($q) use ($request) {
                 $q->where('name', 'like', '%' . $request->user . '%');
-            })->where('anonymize', '=', 0); // 🔹 匿名投稿を確実に除外
+            })->where('anonymize', '=', 0); // ✅ 匿名投稿を確実に除外
         }
     
-        // 日付検索（開始日 & 終了日）
+        // 🔍 日付検索（開始日 & 終了日）
         if ($request->filled('start_date') && $request->filled('end_date')) {
             $query->whereBetween('created_at', [$request->start_date . ' 00:00:00', $request->end_date . ' 23:59:59']);
         } elseif ($request->filled('start_date')) {
@@ -111,12 +114,11 @@ public function journals()
             $query->whereDate('created_at', '<=', $request->end_date);
         }
     
-        // 検索結果を取得（新しい投稿が上にくるように）
+        // 🔹 最新の投稿が上にくるように並び替え
         $qas = $query->orderBy('created_at', 'desc')->paginate(10);
     
         return view('qas_index', compact('qas'));
     }
-    
 
     // 教材一覧表示
     public function materials()
@@ -127,49 +129,43 @@ public function journals()
 
     public function journals_index(Request $request)
     {
-        // ログイン中のユーザーID
-        $userId = auth()->id();
+        $query = Journal::where('user_id', auth()->id());
     
-        // 自分のジャーナルのみ取得
-        $query = Journal::where('user_id', $userId);
-    
-        // 日付フィルター適用
-        if ($request->filled('start_date') && $request->filled('end_date')) {
-            $query->whereBetween('start_time', [$request->start_date, $request->end_date]);
+        if ($request->filled('start_date')) {
+            $query->whereDate('start_time', '>=', $request->start_date);
         }
-    
-        // キーワード検索（学習内容・目標・疑問のいずれか）
+        if ($request->filled('end_date')) {
+            $query->whereDate('start_time', '<=', $request->end_date);
+        }
         if ($request->filled('keyword')) {
-            $keyword = $request->keyword;
-            $query->where(function ($q) use ($keyword) {
-                $q->where('learnings', 'like', "%$keyword%")
-                  ->orWhere('goals', 'like', "%$keyword%")
-                  ->orWhere('questions', 'like', "%$keyword%");
+            $query->where(function ($q) use ($request) {
+                $q->where('goals', 'like', "%{$request->keyword}%")
+                  ->orWhere('learnings', 'like', "%{$request->keyword}%")
+                  ->orWhere('questions', 'like', "%{$request->keyword}%");
             });
         }
     
-        // ページネーション適用 (10件ずつ)
+        // 🔹 最新の学習記録が上に来るように修正
         $journals = $query->orderBy('start_time', 'desc')->paginate(10);
     
-        // 直近1週間分のデータを取得し、日ごとの合計学習時間を計算
+        // 📊 直近7日間の学習時間データ取得
         $oneWeekAgo = Carbon::now()->subDays(7)->startOfDay();
-        $weeklyData = Journal::where('user_id', $userId) // 👈 自分のデータのみ
+        $weeklyData = Journal::where('user_id', auth()->id())
             ->where('start_time', '>=', $oneWeekAgo)
             ->selectRaw('DATE(start_time) as date, SUM(duration) as total_duration')
             ->groupBy('date')
             ->orderBy('date', 'asc')
             ->get();
     
+        if ($request->ajax()) {
+            return response()->json([
+                'html' => view('journals_list', compact('journals'))->render(),
+                'pagination' => (string) $journals->links(),
+            ]);
+        }
         return view('journals_index', compact('journals', 'weeklyData'));
     }
 
-    /*不使用
-    public function qas_index() 
-    {
-        $qas = Qa::with('user', 'target')->get();
-        return view('qas_index', compact('qas'));
-    }
-   */
   public function materials_index(Request $request) 
   {
       $query = Material::with('teacher');

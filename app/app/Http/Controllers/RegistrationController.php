@@ -12,7 +12,37 @@ use Carbon\Carbon;
 
 class RegistrationController extends Controller
 {
-
+    public function storeJournal(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'goals' => 'required|string|max:255',
+                'learnings' => 'required|string|max:255',
+                'questions' => 'nullable|string|max:255',
+                'start_time' => 'required|date_format:Y-m-d H:i:s',
+                'end_time' => 'required|date_format:Y-m-d H:i:s|after:start_time',
+                'duration' => 'required|integer|min:1',
+            ]);
+    
+            $journal = Journal::create([
+                'user_id' => auth()->id(),
+                'start_time' => $validated['start_time'],
+                'end_time' => $validated['end_time'],
+                'duration' => $validated['duration'],
+                'goals' => $validated['goals'],
+                'learnings' => $validated['learnings'],
+                'questions' => $validated['questions'],
+            ]);
+    
+            return response()->json(['success' => true, 'journal' => $journal]);
+    
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['success' => false, 'errors' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+    /*
     public function storeJournal(Request $request)
     {
         $validated = $request->validate([
@@ -36,7 +66,7 @@ class RegistrationController extends Controller
     
         return redirect('/journals')->with('success', '学習ジャーナルが追加されました！');
     }
-    
+    */
     public function updateStudentJournal(Request $request, $id)
     {
         $journal = Journal::findOrFail($id);
