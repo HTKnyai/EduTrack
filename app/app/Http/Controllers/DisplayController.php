@@ -9,6 +9,7 @@ use App\Journal;
 use App\Material;
 use App\Qa;
 use App\User;
+
 use Carbon\Carbon;
 
 class DisplayController extends Controller

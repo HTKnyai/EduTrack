@@ -16,13 +16,14 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
-                    <li class="nav-item"><a class="nav-link" href="/journals">学習ジャーナル</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/qas">Q&A</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/materials">教材</a></li>
-
+                    @if(auth()->check() && auth()->user()->role == 0) <!-- 生徒のみ表示 -->
+                        <li class="nav-item"><a class="nav-link" href="/journals">学習ジャーナル</a></li>
+                    @endif
                     @if(auth()->check() && auth()->user()->role == 1) <!-- 教師のみ -->
                         <li class="nav-item"><a class="nav-link" href="/students">生徒管理</a></li>
                     @endif
+                    <li class="nav-item"><a class="nav-link" href="/qas">Q&A</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/materials">教材</a></li>
                 </ul>
                 
                 <!-- ユーザー認証機能 -->
