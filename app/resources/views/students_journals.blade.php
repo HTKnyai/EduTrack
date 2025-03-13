@@ -9,20 +9,24 @@
 <div class="container">
     <h2>{{ $student->name }} の学習ジャーナル</h2>
 
-    <!-- 検索フォーム -->
+    <!-- 🔍 検索フォーム -->
     <form action="{{ route('students.journals', $student->id) }}" method="GET" class="mb-3">
         <div class="row">
             <div class="col-md-3">
-                <input type="date" name="date" class="form-control" value="{{ request('date') }}">
+                <label for="date">日付</label>
+                <input type="date" name="date" id="date" class="form-control" value="{{ request('date') }}">
             </div>
             <div class="col-md-3">
-                <input type="text" name="goal" class="form-control" placeholder="目標で検索" value="{{ request('goal') }}">
+                <label for="goal">学習目標</label>
+                <input type="text" name="goal" id="goal" class="form-control" placeholder="目標で検索" value="{{ request('goal') }}">
             </div>
             <div class="col-md-3">
-                <input type="text" name="learning" class="form-control" placeholder="学習内容で検索" value="{{ request('learning') }}">
+                <label for="learning">学習内容</label>
+                <input type="text" name="learning" id="learning" class="form-control" placeholder="学習内容で検索" value="{{ request('learning') }}">
             </div>
             <div class="col-md-3">
-                <input type="text" name="question" class="form-control" placeholder="疑問で検索" value="{{ request('question') }}">
+                <label for="question">疑問</label>
+                <input type="text" name="question" id="question" class="form-control" placeholder="疑問で検索" value="{{ request('question') }}">
             </div>
             <div class="col-md-3 mt-2">
                 <button type="submit" class="btn btn-primary">検索</button>
@@ -30,6 +34,7 @@
         </div>
     </form>
 
+    <!-- 📄 学習記録テーブル -->
     <table class="table">
         <thead>
             <tr>
@@ -45,9 +50,9 @@
         <tbody>
             @foreach($journals as $journal)
             <tr>
-                <td>{{ $journal->start_time }}</td>
-                <td>{{ $journal->end_time }}</td>
-                <td>{{ round($journal->duration / 60, 1) }}</td>
+                <td>{{ Carbon::parse($journal->start_time)->format('Y-m-d H:i:s') }}</td>
+                <td>{{ Carbon::parse($journal->end_time)->format('Y-m-d H:i:s') }}</td>
+                <td>{{ number_format($journal->duration / 60, 1) }} 分</td>
                 <td>{{ $journal->goals }}</td>
                 <td>{{ $journal->learnings }}</td>
                 <td>{{ $journal->questions }}</td>
@@ -112,7 +117,7 @@
         </tbody>
     </table>
 
-    <!-- ページネーション -->
+    <!-- 📌 ページネーション -->
     <div class="mt-3">
         {{ $journals->links() }}
     </div>

@@ -134,20 +134,59 @@ class DisplayController extends Controller
     public function indexManagement(Request $request)
     {
         $query = User::where('role', 0);
-
+    
         if ($request->filled('search')) {
             $query->where('name', 'like', '%' . $request->search . '%');
         }
+    
+        $students = $query->get()->map(function ($student) use ($request) {
+            $yesterdayJournal = $this->getYesterdayJournal($student->id);
+    
+            // 🔹 検索条件を適用
+            if ($request->filled('goal') && (!str_contains($yesterdayJournal->goals ?? '', $request->goal))) {
+                return null;
+            }
+            if ($request->filled('learning') && (!str_contains($yesterdayJournal->learnings ?? '', $request->learning))) {
+                return null;
+            }
+            if ($request->filled('question') && (!str_contains($yesterdayJournal->questions ?? '', $request->question))) {
+                return null;
+            }
+    
+            return [
+                'id' => $student->id,
+                'name' => $student->name,
+                'averageDuration' => round($this->getAverageStudyTime($student->id) / 60, 1) . ' 分',
+                'yesterdayDuration' => round(optional($yesterdayJournal)->total_duration / 60, 1) . ' 分',
+                'yesterdayGoals' => optional($yesterdayJournal)->goals ?? 'なし',
+                'yesterdayLearnings' => optional($yesterdayJournal)->learnings ?? 'なし',
+                'yesterdayQuestions' => optional($yesterdayJournal)->questions ?? 'なし',
+            ];
+        })->filter(); // 🔹 nullデータを削除
+    
+        return view('students_index', ['studentData' => $students]);
+    }
 
-        return view('students_index', ['studentData' => $query->get()->map(fn($student) => [
-            'id' => $student->id,
-            'name' => $student->name,
-            'averageDuration' => round($this->getAverageStudyTime($student->id) / 60, 1) . ' 分',
-            'yesterdayDuration' => round(optional($this->getYesterdayJournal($student->id))->duration / 60, 1) . ' 分',
-            'yesterdayGoals' => optional($this->getYesterdayJournal($student->id))->goals ?? 'なし',
-            'yesterdayLearnings' => optional($this->getYesterdayJournal($student->id))->learnings ?? 'なし',
-            'yesterdayQuestions' => optional($this->getYesterdayJournal($student->id))->questions ?? 'なし',
-        ])]);
+    public function showStudentJournals($id, Request $request)
+    {
+        $student = User::findOrFail($id);
+        $query = Journal::where('user_id', $id)->orderBy('start_time', 'desc');
+    
+        if ($request->filled('date')) {
+            $query->whereDate('start_time', $request->date);
+        }
+        if ($request->filled('goal')) {
+            $query->where('goals', 'LIKE', "%{$request->goal}%");
+        }
+        if ($request->filled('learning')) {
+            $query->where('learnings', 'LIKE', "%{$request->learning}%");
+        }
+        if ($request->filled('question')) {
+            $query->where('questions', 'LIKE', "%{$request->question}%");
+        }
+        $journals = $query->paginate(10);
+    
+        return view('students_journals', compact('student', 'journals'));
     }
 
     /* ========== 📌 共通メソッド ========== */
@@ -166,7 +205,7 @@ class DisplayController extends Controller
     {
         return Journal::where('user_id', $userId)
             ->whereDate('start_time', Carbon::yesterday())
-            ->selectRaw('SUM(duration) as total_duration, GROUP_CONCAT(learnings SEPARATOR ", ") as learnings, GROUP_CONCAT(questions SEPARATOR ", ") as questions')
+            ->selectRaw('SUM(duration) as total_duration, GROUP_CONCAT(DISTINCT goals SEPARATOR ", ") as goals, GROUP_CONCAT(DISTINCT learnings SEPARATOR ", ") as learnings, GROUP_CONCAT(DISTINCT questions SEPARATOR ", ") as questions')
             ->first();
     }
 

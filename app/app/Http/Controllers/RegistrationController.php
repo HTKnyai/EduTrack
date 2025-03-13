@@ -34,11 +34,10 @@ class RegistrationController extends Controller
         try {
             $validated = $this->validateJournal($request);
     
-            // フォーマットを明示的に修正
+            // フォーマット修正
             $validated['start_time'] = Carbon::parse($validated['start_time'])->format('Y-m-d H:i:s');
             $validated['end_time'] = Carbon::parse($validated['end_time'])->format('Y-m-d H:i:s');
     
-            // データを保存
             $journal = Journal::create(array_merge([
                 'user_id' => auth()->id(),
             ], $validated));
@@ -62,16 +61,35 @@ class RegistrationController extends Controller
     public function updateStudentJournal(Request $request, $id)
     {
         $journal = Journal::findOrFail($id);
-        $validated = $this->validateJournal($request);
-
-        $journal->update([
-            'start_time' => Carbon::parse($validated['start_time']),
-            'end_time' => Carbon::parse($validated['end_time']),
-            'duration' => Carbon::parse($validated['end_time'])->diffInSeconds(Carbon::parse($validated['start_time'])),
-            ...$validated
+    
+        // バリデーション
+        $validated = $request->validate([
+            'goals' => 'required|string|max:255',
+            'learnings' => 'required|string|max:255',
+            'questions' => 'nullable|string|max:255',
+            'start_time' => 'required|date_format:Y-m-d\TH:i',
+            'end_time' => 'required|date_format:Y-m-d\TH:i|after:start_time',
         ]);
-
-        return redirect()->route('students.journals', $journal->user_id)->with('success', '学習ジャーナルが更新されました');
+    
+        // Carbon に変換
+        $startTime = Carbon::parse($validated['start_time']);
+        $endTime = Carbon::parse($validated['end_time']);
+    
+        // 学習時間の計算（秒単位）
+        $duration = $endTime->diffInSeconds($startTime);
+    
+        // データ更新
+        $journal->update([
+            'start_time' => $startTime->format('Y-m-d H:i:s'),
+            'end_time' => $endTime->format('Y-m-d H:i:s'),
+            'duration' => $duration,
+            'goals' => $validated['goals'],
+            'learnings' => $validated['learnings'],
+            'questions' => $validated['questions'],
+        ]);
+    
+        return redirect()->route('students.journals', $journal->user_id)
+            ->with('success', '学習ジャーナルが更新されました');
     }
 
     public function destroyStudentJournal($id)
