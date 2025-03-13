@@ -14,97 +14,92 @@ use Carbon\Carbon;
 
 class RegistrationController extends Controller
 {
-    /*----------学習ジャーナル----------*/
+    /*---------- 学習ジャーナル ----------*/
+
+    // ジャーナル共通バリデーション
+    private function validateJournal(Request $request)
+    {
+        return $request->validate([
+            'goals' => 'required|string|max:255',
+            'learnings' => 'required|string|max:255',
+            'questions' => 'nullable|string|max:255',
+            'start_time' => 'required|date_format:Y-m-d H:i:s',
+            'end_time' => 'required|date_format:Y-m-d H:i:s|after:start_time',
+            'duration' => 'required|integer|min:0',
+        ]);
+    }
+
     public function storeJournal(Request $request)
     {
         try {
-            $validated = $request->validate([
-                'goals' => 'required|string|max:255',
-                'learnings' => 'required|string|max:255',
-                'questions' => 'nullable|string|max:255',
-                'start_time' => 'required|date_format:Y-m-d H:i:s',
-                'end_time' => 'required|date_format:Y-m-d H:i:s|after:start_time',
-                'duration' => 'required|integer|min:1',
-            ]);
+            $validated = $this->validateJournal($request);
     
-            $journal = Journal::create([
+            // フォーマットを明示的に修正
+            $validated['start_time'] = Carbon::parse($validated['start_time'])->format('Y-m-d H:i:s');
+            $validated['end_time'] = Carbon::parse($validated['end_time'])->format('Y-m-d H:i:s');
+    
+            // データを保存
+            $journal = Journal::create(array_merge([
                 'user_id' => auth()->id(),
-                'start_time' => $validated['start_time'],
-                'end_time' => $validated['end_time'],
-                'duration' => $validated['duration'],
-                'goals' => $validated['goals'],
-                'learnings' => $validated['learnings'],
-                'questions' => $validated['questions'],
-            ]);
+            ], $validated));
     
             return response()->json(['success' => true, 'journal' => $journal]);
     
         } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json(['success' => false, 'errors' => $e->errors()], 422);
+            return response()->json([
+                'success' => false,
+                'errors' => $e->errors(),
+                'message' => 'バリデーションエラー: ' . json_encode($e->errors()),
+            ], 422);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            return response()->json([
+                'success' => false,
+                'message' => 'サーバーエラー: ' . $e->getMessage(),
+            ], 500);
         }
     }
 
     public function updateStudentJournal(Request $request, $id)
     {
         $journal = Journal::findOrFail($id);
-    
-        // バリデーション
-        $request->validate([
-            'start_time' => 'required|date_format:Y-m-d\TH:i',
-            'end_time' => 'required|date_format:Y-m-d\TH:i|after:start_time',
-            'goals' => 'required|string|max:255',
-            'learnings' => 'required|string|max:255',
-            'questions' => 'nullable|string|max:255',
-        ]);
-    
-        // 学習時間を自動計算
-        $startTime = Carbon::parse($request->start_time);
-        $endTime = Carbon::parse($request->end_time);
-        $duration = $endTime->diffInSeconds($startTime); // 秒単位の計算
-    
-        // データ更新
+        $validated = $this->validateJournal($request);
+
         $journal->update([
-            'start_time' => $startTime,
-            'end_time' => $endTime,
-            'duration' => $duration,
-            'goals' => $request->goals,
-            'learnings' => $request->learnings,
-            'questions' => $request->questions,
+            'start_time' => Carbon::parse($validated['start_time']),
+            'end_time' => Carbon::parse($validated['end_time']),
+            'duration' => Carbon::parse($validated['end_time'])->diffInSeconds(Carbon::parse($validated['start_time'])),
+            ...$validated
         ]);
-    
+
         return redirect()->route('students.journals', $journal->user_id)->with('success', '学習ジャーナルが更新されました');
     }
-    
+
     public function destroyStudentJournal($id)
     {
-        $journal = Journal::findOrFail($id);
-        
-        $journal->delete();
-    
+        Journal::findOrFail($id)->delete();
         return redirect()->back()->with('success', '学習ジャーナルが削除されました');
-    }    
+    }
 
-    /*----------Q&A新規登録----------*/
+    /*---------- Q&A ----------*/
+
+    // Q&A共通バリデーション
+    private function validateQa(Request $request)
+    {
+        return $request->validate([
+            'contents' => 'required|string|max:500',
+            'target_id' => 'nullable|integer|min:0',
+        ]);
+    }
+
     public function storeQa(Request $request)
     {
-        // バリデーション
-        $validated = $request->validate([
-            'contents' => 'required|string|max:500',
-            'target_id' => 'nullable|integer|min:0', // 新規質問は0
-        ]);
+        $validated = $this->validateQa($request);
 
-        if (!Auth::check()) {
-            return redirect('/login')->with('error', 'ログインしてください');
-        }
-
-        // データ登録
         Qa::create([
-            'user_id' => Auth::id(), // ログイン中のユーザー
-            'target_id' => $validated['target_id'] ?? 0, // 未入力時は新規質問として `0`
+            'user_id' => Auth::id(),
+            'target_id' => $validated['target_id'] ?? 0,
             'contents' => $validated['contents'],
-            'anonymize' => $request->filled('anonymize') ? 1 : 0, // チェックボックスの有無
+            'anonymize' => $request->filled('anonymize') ? 1 : 0,
         ]);
 
         return redirect('/qas')->with('success', '質問が投稿されました！');
@@ -113,127 +108,106 @@ class RegistrationController extends Controller
     public function updateQa(Request $request, $id)
     {
         $qa = Qa::findOrFail($id);
-    
-        // ✅ 自分の投稿のみ編集可能
         if ($qa->user_id !== Auth::id()) {
             return redirect()->route('qas_index')->with('error', '編集権限がありません');
         }
-    
-        // バリデーション
-        $request->validate([
-            'contents' => 'required|string|max:500',
-        ]);
-    
-        // データ更新
-        $qa->update([
-            'contents' => $request->contents,
-        ]);
-    
+
+        $qa->update(['contents' => $request->validate(['contents' => 'required|string|max:500'])['contents']]);
+
         return redirect()->route('qas_index')->with('success', '質問が更新されました');
     }
-    
+
     public function destroyQa($id)
     {
         $qa = Qa::findOrFail($id);
-    
-        // 自分の投稿のみ削除可能
         if ($qa->user_id !== Auth::id()) {
             return redirect()->route('qas_index')->with('error', '削除権限がありません');
         }
-    
-        // 削除
+
         $qa->delete();
-    
         return redirect()->route('qas_index')->with('success', '質問が削除されました');
     }
-    
-    /*----------教材----------*/
+
+    /*---------- 教材管理 ----------*/
+
+    // 教材共通バリデーション
+    private function validateMaterial(Request $request, $isUpdate = false)
+    {
+        $rules = [
+            'title' => 'required|string|max:255',
+        ];
+
+        if (!$isUpdate || $request->hasFile('file')) {
+            $rules['file'] = 'required|file|mimes:pdf,doc,docx,ppt,pptx,txt|max:2048';
+        }
+
+        return $request->validate($rules);
+    }
+
+    private function handleFileUpload(Request $request, $oldFilePath = null)
+    {
+        if ($request->hasFile('file')) {
+            if ($oldFilePath) {
+                Storage::disk('public')->delete($oldFilePath);
+            }
+
+            $fileName = $request->file('file')->getClientOriginalName();
+            return $request->file('file')->storeAs('materials', $fileName, 'public');
+        }
+
+        return $oldFilePath;
+    }
+
     public function storeMaterial(Request $request)
     {
-        // バリデーション
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'file' => 'required|file|mimes:pdf,doc,docx,ppt,pptx,txt|max:2048',
-        ]);
-    
-        // ファイルを保存
-        if ($request->hasFile('file')) {
-            $fileName = $request->file('file')->getClientOriginalName(); // 元のファイル名
-            $filePath = $request->file('file')->storeAs('materials', $fileName, 'public'); // ファイル名を維持して保存
-        } else {
-            return back()->with('error', 'ファイルのアップロードに失敗しました');
-        }
-    
-        // データベースに保存
+        $validated = $this->validateMaterial($request);
+
+        $filePath = $this->handleFileUpload($request);
+
         Material::create([
             'teacher_id' => auth()->id(),
-            'title' => $request->title,
-            'file_path' => 'storage/materials/' . $fileName,
+            'title' => $validated['title'],
+            'file_path' => 'storage/' . $filePath,
             'dls' => 0,
         ]);
-    
+
         return back()->with('success', '教材をアップロードしました');
     }
-    
+
     public function updateMaterial(Request $request, $id)
     {
         $material = Material::findOrFail($id);
-    
-        // バリデーション
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'file' => 'nullable|file|mimes:pdf,doc,docx,ppt,pptx,txt|max:2048', // ファイルは任意
+        $validated = $this->validateMaterial($request, true);
+
+        $filePath = $this->handleFileUpload($request, $material->file_path);
+
+        $material->update([
+            'title' => $validated['title'],
+            'file_path' => 'storage/' . $filePath,
         ]);
-    
-        // ファイルがアップロードされた場合
-        if ($request->hasFile('file')) {
-            // 以前のファイルを削除
-            Storage::disk('public')->delete($material->file_path);
-    
-            // 新しいファイルを保存
-            $originalFilename = $request->file('file')->getClientOriginalName(); // 元のファイル名を取得
-            $filePath = $request->file('file')->storeAs('materials', $originalFilename, 'public');
-    
-            // ファイルパスを更新
-            $material->file_path = 'storage/' . $filePath;
-        }
-    
-        // タイトルを更新
-        $material->title = $request->title;
-        $material->save();
-    
+
         return redirect()->route('materials.index')->with('success', '教材が更新されました');
     }
-    
-    // 教材削除
+
     public function destroyMaterial($id)
     {
         $material = Material::findOrFail($id);
-    
-        // ファイル削除
+
         if ($material->file_path) {
-            Storage::delete(str_replace('storage/', 'public/', $material->file_path));
+            Storage::disk('public')->delete($material->file_path);
         }
-    
+
         $material->delete();
-    
+
         return back()->with('success', '教材を削除しました');
     }
 
     public function downloadMaterial($id)
     {
         $material = Material::findOrFail($id);
-    
-        // ダウンロード数を更新
         $material->increment('dls');
-    
-        // ファイルパス取得
+
         $filePath = storage_path('app/public/' . str_replace('storage/', '', $material->file_path));
-    
-        // ファイル名を取得
-        $fileName = basename($material->file_path);
-    
-        // ファイルをダウンロード
-        return response()->download($filePath, $fileName);
+        return response()->download($filePath, basename($material->file_path));
     }
 }

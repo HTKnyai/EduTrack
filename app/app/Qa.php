@@ -9,19 +9,19 @@ class Qa extends Model
 {
     protected $fillable = ['user_id', 'target_id', 'contents', 'anonymize'];
 
-    // 🔹 質問を投稿したユーザー（リレーション）
+    // 質問を投稿したユーザー
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    // 🔹 回答の対象となる質問（親質問）
+    // 回答の対象となる質問（親質問）
     public function target()
     {
         return $this->belongsTo(Qa::class, 'target_id');
     }
 
-    // 🔹 この質問に対する回答（子質問）
+    // 質問に対する回答（子質問）
     public function replies()
     {
         return $this->hasMany(Qa::class, 'target_id');

@@ -99,9 +99,17 @@ document.addEventListener("DOMContentLoaded", function() {
                 alert("学習開始ボタンを押してください！");
                 return;
             }
+            
             let endTime = new Date();
+            let durationInSeconds = Math.round((endTime - startTime) / 1000);
+
+            if (durationInSeconds <= 0) {
+                alert("学習時間が正しく記録されていません。");
+                return;
+            }
+
             document.getElementById("end_time").value = formatDateForMySQL(endTime);
-            document.getElementById("duration").value = Math.round((endTime - startTime) / 1000);
+            document.getElementById("duration").value = durationInSeconds;
         });
 
         document.getElementById("journalForm").addEventListener("submit", function(event) {

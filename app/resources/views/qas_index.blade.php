@@ -6,10 +6,10 @@
 <div class="container">
     <h2>Q&A（質問掲示板）</h2>
 
-    <!-- 🔹 質問投稿ボタン -->
+    <!-- 質問投稿ボタン -->
     <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#qaModal">投稿</button>
 
-    <!-- 🔍 検索フォーム -->
+    <!-- 検索フォーム -->
     <form action="{{ route('qas_index') }}" method="GET" class="mb-3">
         <div class="row">
             <div class="col-md-3">
@@ -34,12 +34,12 @@
         </div>
     </form>
 
-    <!-- ✏ 質問投稿モーダル -->
+    <!-- 質問投稿モーダル -->
     <div class="modal fade" id="qaModal" tabindex="-1" aria-labelledby="qaModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="qaModalLabel">質問を投稿</h5>
+                    <h5 class="modal-title" id="qaModalLabel">質問・回答を投稿</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -70,7 +70,7 @@
         </div>
     </div>
 
-    <!-- 📄 質問一覧（ツリー形式） -->
+    <!-- 質問一覧（ツリー形式） -->
     <div class="mt-4">
         <ul class="list-group">
             @foreach($qas->where('target_id', 0) as $qa)
@@ -81,7 +81,7 @@
                     {{ $qa->contents }}
                     <span class="text-muted">（{{ $qa->created_at->format('Y-m-d H:i') }}）</span>
 
-                    <!-- ✏ 編集・削除ボタン（自分の投稿のみ） -->
+                    <!-- 編集・削除ボタン（自分の投稿のみ） -->
                     @if(auth()->id() == $qa->user_id)
                         <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editQaModal{{ $qa->id }}">編集</button>
                         <form action="{{ route('qas.destroy', $qa->id) }}" method="POST" class="d-inline">
@@ -114,7 +114,7 @@
                         </div>
                     </div>
 
-                    <!-- 📌 回答一覧（入れ子リスト） -->
+                    <!-- 回答一覧（入れ子リスト） -->
                     @if($qa->replies->count() > 0)
                         <ul class="list-group mt-2">
                             @foreach($qa->replies as $reply)
@@ -127,13 +127,13 @@
         </ul>
     </div>
 
-    <!-- 📌 ページネーション -->
+    <!-- ページネーション -->
     <div class="d-flex justify-content-center mt-3">
         {{ $qas->appends(request()->query())->links() }}
     </div>
 </div>
 
-<!-- ✅ 検索用スクリプト -->
+<!-- 検索用スクリプト -->
 <script>
 document.getElementById('qaSearch').addEventListener('input', function() {
     let filter = this.value.toLowerCase();
