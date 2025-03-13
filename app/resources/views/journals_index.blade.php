@@ -63,9 +63,9 @@
             @include('journals_list')
         </div>
 
-        <!-- 📌 ページネーション -->
+        <!-- 📌 ページネーション（非同期リクエスト対応） -->
         <div class="d-flex justify-content-center" id="pagination">
-            {{ $journals->appends(request()->query())->links() }}
+            {!! $journals->appends(request()->query())->links() !!}
         </div>
     </div>
 </div>
@@ -150,17 +150,24 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 
     document.addEventListener("click", function(e) {
-        if (e.target.tagName === "A" && e.target.closest("#pagination")) {
-            e.preventDefault();
-            fetch(e.target.href)
-            .then(response => response.json())
-            .then(data => { 
-                document.getElementById("journalList").innerHTML = data.html;
-                document.getElementById("pagination").innerHTML = data.pagination; // 📌 ページネーションを更新
-            })
-            .catch(error => console.error("ページネーションエラー:", error));
-        }
-    });
+    if (e.target.tagName === "A" && e.target.closest("#pagination")) {
+        e.preventDefault();
+        fetch(e.target.href, { 
+            headers: { "X-Requested-With": "XMLHttpRequest" } // ✅ AJAXリクエストを明示
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTPエラー: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => { 
+            document.getElementById("journalList").innerHTML = data.html;
+            document.getElementById("pagination").innerHTML = data.pagination;
+        })
+        .catch(error => console.error("ページネーションエラー:", error));
+    }
+});
     }
 
     function renderChart() {

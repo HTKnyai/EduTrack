@@ -14,6 +14,7 @@ use Carbon\Carbon;
 
 class DisplayController extends Controller
 {
+/*----------dashboard----------*/
     public function index()
     {
         $user = auth()->user();
@@ -39,7 +40,7 @@ class DisplayController extends Controller
             $yesterdayJournal = null;
         }
     
-        // **質問のみ（target_id = 0）を直近5件取得**
+        //直近のqa5件取得 質問（target_id = 0）のみ
         $qas = Qa::with('user')
             ->where('target_id', 0)
             ->latest()
@@ -51,47 +52,43 @@ class DisplayController extends Controller
     
         return view('dashboard', compact('weeklyData', 'qas', 'materials', 'yesterdayJournal'));
     }
-
-// 学習ジャーナル一覧表示
-public function journals()
-{
-    $journals = Journal::with('user')->orderBy('start_time', 'desc')->get();
-
-    // 直近1週間分のデータを取得し、日ごとの合計学習時間を計算
-    $oneWeekAgo = Carbon::now()->subDays(7)->startOfDay();
-    $weeklyData = Journal::where('start_time', '>=', $oneWeekAgo)
-        ->select(DB::raw('DATE(start_time) as date'), DB::raw('SUM(duration) as total_duration'))
-        ->groupBy('date')
-        ->orderBy('date', 'asc')
-        ->get();
-
-    // データをビューへ渡す
-    return view('journals_index', compact('journals', 'weeklyData'));
-}
-
-    public function weeklyData()
+/*------------journals----------*/
+    private function getWeeklyData()
     {
-    $weeklyData = Journal::where('created_at', '>=', now()->subDays(7))
-        ->selectRaw('DATE(created_at) as date, SUM(duration) as total_duration')
-        ->groupBy('date')
-        ->orderBy('date', 'asc')
-        ->get();
-
-    $labels = $weeklyData->pluck('date')->toArray();
-    $durations = $weeklyData->pluck('total_duration')->map(fn($d) => round($d / 60, 1))->toArray(); // 分単位
-
-    return response()->json([
-        'labels' => $labels,
-        'durations' => $durations,
-    ]);
+        $oneWeekAgo = Carbon::now()->subDays(7)->startOfDay();
+        return Journal::where('start_time', '>=', $oneWeekAgo)
+            ->selectRaw('DATE(start_time) as date, SUM(duration) as total_duration')
+            ->groupBy('date')
+            ->orderBy('date', 'asc')
+            ->get();
     }
 
-    // 質問掲示板一覧表示
+    // 学習ジャーナルの表示
+    public function journals()
+    {
+        $journals = Journal::with('user')->orderBy('start_time', 'desc')->get();
+        $weeklyData = $this->getWeeklyData(); // 共通メソッドを呼び出し
+
+        return view('journals_index', compact('journals', 'weeklyData'));
+    }
+
+    // 週ごとの学習データを取得（JSONで返却）
+    public function weeklyData()
+    {
+        $weeklyData = $this->getWeeklyData(); // 共通メソッドを呼び出し
+
+        return response()->json([
+            'labels' => $weeklyData->pluck('date')->toArray(),
+            'durations' => $weeklyData->pluck('total_duration')->map(fn($d) => round($d / 60, 1))->toArray(), // 分単位
+        ]);
+    }
+
+ /*----------Q&A----------*/
     public function qas_index(Request $request)
     {
         $query = Qa::with(['user', 'target', 'replies']);
     
-        // 🔍 キーワード検索（質問・回答の内容）
+        // キーワード検索（質問・回答の内容）
         if ($request->filled('keyword')) {
             $query->where('contents', 'like', '%' . $request->keyword . '%')
                   ->orWhereHas('replies', function ($q) use ($request) {
@@ -99,14 +96,14 @@ public function journals()
                   });
         }
     
-        // 🔍 投稿者名検索（匿名を除外する）
+        // 投稿者名検索（匿名を除外する）
         if ($request->filled('user')) {
             $query->whereHas('user', function ($q) use ($request) {
                 $q->where('name', 'like', '%' . $request->user . '%');
             })->where('anonymize', '=', 0); // ✅ 匿名投稿を確実に除外
         }
     
-        // 🔍 日付検索（開始日 & 終了日）
+        // 日付検索（開始日 & 終了日）
         if ($request->filled('start_date') && $request->filled('end_date')) {
             $query->whereBetween('created_at', [$request->start_date . ' 00:00:00', $request->end_date . ' 23:59:59']);
         } elseif ($request->filled('start_date')) {
@@ -115,13 +112,13 @@ public function journals()
             $query->whereDate('created_at', '<=', $request->end_date);
         }
     
-        // 🔹 最新の投稿が上にくるように並び替え
+        // 最新の投稿が上にくるように並び替え
         $qas = $query->orderBy('created_at', 'desc')->paginate(10);
     
         return view('qas_index', compact('qas'));
     }
 
-    // 教材一覧表示
+    /*----------教材----------*/
     public function materials()
     {
         $materials = Material::with('teacher')->get();
@@ -146,10 +143,8 @@ public function journals()
             });
         }
     
-        // 🔹 最新の学習記録が上に来るように修正
         $journals = $query->orderBy('start_time', 'desc')->paginate(10);
     
-        // 📊 直近7日間の学習時間データ取得
         $oneWeekAgo = Carbon::now()->subDays(7)->startOfDay();
         $weeklyData = Journal::where('user_id', auth()->id())
             ->where('start_time', '>=', $oneWeekAgo)
@@ -157,43 +152,47 @@ public function journals()
             ->groupBy('date')
             ->orderBy('date', 'asc')
             ->get();
-    
+
         if ($request->ajax()) {
             return response()->json([
                 'html' => view('journals_list', compact('journals'))->render(),
                 'pagination' => (string) $journals->links(),
+                'weeklyData' => $weeklyData, // ✅ 追加
             ]);
         }
+        
         return view('journals_index', compact('journals', 'weeklyData'));
-    }
+        }
 
-  public function materials_index(Request $request) 
-  {
-      $query = Material::with('teacher');
-  
-      // キーワード検索（タイトル）
-      if ($request->filled('keyword')) {
-          $query->where('title', 'like', '%' . $request->keyword . '%');
-      }
-  
-      // 期間検索（作成日）
-      if ($request->filled('start_date') && $request->filled('end_date')) {
-          $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
-      }
-  
-      // 投稿者検索（教師名）
-      if ($request->filled('teacher')) {
-          $query->whereHas('teacher', function ($q) use ($request) {
-              $q->where('name', 'like', '%' . $request->teacher . '%');
-          });
-      }
-  
-      // ページネーション適用（10件ずつ）
-      $materials = $query->orderBy('created_at', 'desc')->paginate(10);
-  
-      return view('materials_index', compact('materials'));
-  }
+    public function materials_index(Request $request) 
+    {
+        $query = Material::with('teacher');
     
+        // キーワード検索（タイトル）
+        if ($request->filled('keyword')) {
+            $query->where('title', 'like', '%' . $request->keyword . '%');
+        }
+    
+        // 期間検索（作成日）
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
+        }
+    
+        // 投稿者検索（教師名）
+        if ($request->filled('teacher')) {
+            $query->whereHas('teacher', function ($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->teacher . '%');
+            });
+        }
+    
+        // ページネーション適用（10件ずつ）
+        $materials = $query->orderBy('created_at', 'desc')->paginate(10);
+    
+        return view('materials_index', compact('materials'));
+    }
+    
+    /*----------生徒管理----------*/
+
     public function journals_create()
     {
         $journals = Journal::with('user')->orderBy('start_time', 'desc')->get();
@@ -222,7 +221,7 @@ public function journals()
         $students = $query->get();
     
         // 生徒ごとのデータ取得
-        $studentData = $students->map(function ($student) use ($request) {
+        $studentData = $students->map(function ($student) use ($request) { //
             // 平均学習時間（過去7日間）
             $averageDuration = Journal::where('user_id', $student->id)
                 ->where('start_time', '>=', Carbon::now()->subDays(7))
