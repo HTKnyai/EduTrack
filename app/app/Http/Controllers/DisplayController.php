@@ -12,7 +12,7 @@ use Carbon\Carbon;
 
 class DisplayController extends Controller
 {
-    /* ========== 📌 ダッシュボード関連 ========== */
+    /* ========== ダッシュボード関連 ========== */
     
     public function index()
     {
@@ -21,7 +21,7 @@ class DisplayController extends Controller
         if ($user->role === 0) { // 生徒の場合
             $weeklyData = $this->getUserWeeklyData($user->id);
             $yesterdayJournal = $this->getYesterdayJournal($user->id);
-        } else { // 教師の場合
+        } else { // 教師の場合　
             $weeklyData = collect([]);
             $yesterdayJournal = null;
         }
@@ -34,7 +34,7 @@ class DisplayController extends Controller
         ]);
     }
 
-    /* ========== 📌 学習ジャーナル関連 ========== */
+    /* ========== 学習ジャーナル関連 ========== */
 
     public function journals_index(Request $request)
     {
@@ -46,7 +46,7 @@ class DisplayController extends Controller
         if ($request->filled('end_date')) {
             $query->whereDate('start_time', '<=', $request->end_date);
         }
-        if ($request->filled('keyword')) {
+        if ($request->filled('keyword')) { //ここの検索は学習目標・
             $query->where(function ($q) use ($request) {
                 $q->where('goals', 'like', "%{$request->keyword}%")
                   ->orWhere('learnings', 'like', "%{$request->keyword}%")
@@ -54,12 +54,12 @@ class DisplayController extends Controller
             });
         }
 
-        $journals = $query->orderBy('start_time', 'desc')->paginate(10);
+        $journals = $query->orderBy('start_time', 'desc')->paginate(10);//基本的なページネーション処理
         $weeklyData = $this->getUserWeeklyData(auth()->id());
 
         if ($request->ajax()) {
             return response()->json([
-                'html' => view('journals_list', compact('journals'))->render(),
+                'html' => view('journals_list', compact('journals'))->render(), //journals_list(view)のHTMLを文字列として返す
                 'pagination' => (string) $journals->links(),
                 'weeklyData' => $weeklyData,
             ]);
@@ -68,6 +68,7 @@ class DisplayController extends Controller
         return view('journals_index', compact('journals', 'weeklyData'));
     }
 
+    /*　
     public function weeklyData()
     {
         return response()->json([
@@ -75,38 +76,54 @@ class DisplayController extends Controller
             'durations' => $this->getUserWeeklyData(auth()->id())->pluck('total_duration')->map(fn($d) => round($d / 60, 1))->toArray(),
         ]);
     }
+    */
 
-    /* ========== 📌 Q&A関連 ========== */
+    /* ========== Q&A関連 ========== */
 
     public function qas_index(Request $request)
     {
-        $query = Qa::with(['user', 'target', 'replies']);
-
+        $query = Qa::with(['user', 'target', 'replies']); // 一度に取得するリレーション
+    
         if ($request->filled('keyword')) {
-            $query->where('contents', 'like', '%' . $request->keyword . '%')
-                  ->orWhereHas('replies', function ($q) use ($request) {
-                      $q->where('contents', 'like', '%' . $request->keyword . '%');
-                  });
+            $keyword = '%' . $request->keyword . '%';
+    
+            $query->where(function ($q) use ($keyword) {
+                $q->where('contents', 'like', $keyword);
+                $this->applyNestedReplySearch($q, $keyword);
+            });
         }
-
+    
         if ($request->filled('user')) {
             $query->whereHas('user', function ($q) use ($request) {
                 $q->where('name', 'like', '%' . $request->user . '%');
             })->where('anonymize', '=', 0);
         }
-
+    
         if ($request->filled('start_date') && $request->filled('end_date')) {
-            $query->whereBetween('created_at', [$request->start_date . ' 00:00:00', $request->end_date . ' 23:59:59']);
+            $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
         } elseif ($request->filled('start_date')) {
             $query->whereDate('created_at', '>=', $request->start_date);
         } elseif ($request->filled('end_date')) {
             $query->whereDate('created_at', '<=', $request->end_date);
         }
-
+    
         return view('qas_index', ['qas' => $query->orderBy('created_at', 'desc')->paginate(10)]);
     }
+    
+    /**
+     * 🔄 再帰的に `replies` の階層を検索対象に含める
+     */
+    private function applyNestedReplySearch($query, $keyword, $depth = 3)
+    {
+        if ($depth <= 0) return; // 深さ制限（無限ループ防止）
+    
+        $query->orWhereHas('replies', function ($q) use ($keyword, $depth) {
+            $q->where('contents', 'like', $keyword);
+            $this->applyNestedReplySearch($q, $keyword, $depth - 1); // 再帰的に適用
+        });
+    }
 
-    /* ========== 📌 教材管理関連 ========== */
+    /* ========== 教材管理関連 ========== */
 
     public function materials_index(Request $request) 
     {
@@ -129,9 +146,9 @@ class DisplayController extends Controller
         return view('materials_index', ['materials' => $query->orderBy('created_at', 'desc')->paginate(10)]);
     }
 
-    /* ========== 📌 生徒管理関連 ========== */
+    /* ========== 生徒管理関連 ========== */
 
-    public function indexManagement(Request $request)
+    public function indexManagement(Request $request) //生徒一覧表示
     {
         $query = User::where('role', 0);
     
@@ -142,7 +159,7 @@ class DisplayController extends Controller
         $students = $query->get()->map(function ($student) use ($request) {
             $yesterdayJournal = $this->getYesterdayJournal($student->id);
     
-            // 🔹 検索条件を適用
+            // 検索条件を適用
             if ($request->filled('goal') && (!str_contains($yesterdayJournal->goals ?? '', $request->goal))) {
                 return null;
             }
@@ -162,14 +179,14 @@ class DisplayController extends Controller
                 'yesterdayLearnings' => optional($yesterdayJournal)->learnings ?? 'なし',
                 'yesterdayQuestions' => optional($yesterdayJournal)->questions ?? 'なし',
             ];
-        })->filter(); // 🔹 nullデータを削除
+        })->filter(); // nullデータを削除
     
         return view('students_index', ['studentData' => $students]);
     }
 
-    public function showStudentJournals($id, Request $request)
+    public function showStudentJournals($id, Request $request) //特定生徒の表示
     {
-        $student = User::findOrFail($id);
+        $student = User::findOrFail($id); //failなら404
         $query = Journal::where('user_id', $id)->orderBy('start_time', 'desc');
     
         if ($request->filled('date')) {
@@ -189,7 +206,7 @@ class DisplayController extends Controller
         return view('students_journals', compact('student', 'journals'));
     }
 
-    /* ========== 📌 共通メソッド ========== */
+    /* ========== 共通メソッド ========== */
 
     private function getUserWeeklyData($userId)
     {
@@ -211,16 +228,25 @@ class DisplayController extends Controller
 
     private function getRecentQas($limit = 5)
     {
-        return Qa::with('user')->where('target_id', 0)->latest()->take($limit)->get();
+        return Qa::with('user')
+            ->where('target_id', 0)
+            ->latest()
+            ->take($limit)
+            ->get();
     }
 
     private function getRecentMaterials($limit = 5)
     {
-        return Material::with('teacher')->latest()->take($limit)->get();
+        return Material::with('teacher')
+            ->latest()
+            ->take($limit)
+            ->get();
     }
 
     private function getAverageStudyTime($userId)
     {
-        return Journal::where('user_id', $userId)->where('start_time', '>=', Carbon::now()->subDays(7))->avg('duration');
+        return Journal::where('user_id', $userId)
+            ->where('start_time', '>=', Carbon::now()->subDays(7))
+            ->avg('duration');
     }
 }

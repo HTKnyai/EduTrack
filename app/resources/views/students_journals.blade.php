@@ -6,10 +6,30 @@
 @php
     use Carbon\Carbon;
 @endphp
+
+<!--削除時のアラート-->
+@if (session('success'))
+    <div class="alert alert-danger" id="successMessage">
+        {{ session('success') }}
+    </div>
+
+    <script>
+        // メッセージをフェードアウト
+        setTimeout(function() {
+            let message = document.getElementById('successMessage');
+            if (message) {
+                message.style.transition = "opacity 0.5s ease-out"; // フェードアウト
+                message.style.opacity = "0";
+                setTimeout(() => message.remove(), 500); // 完全に削除
+            }
+        }, 2000); // ミリ秒
+    </script>
+@endif
+
 <div class="container">
     <h2>{{ $student->name }} の学習ジャーナル</h2>
 
-    <!-- 🔍 検索フォーム -->
+    <!-- 検索フォーム -->
     <form action="{{ route('students.journals', $student->id) }}" method="GET" class="mb-3">
         <div class="row">
             <div class="col-md-3">
@@ -34,7 +54,7 @@
         </div>
     </form>
 
-    <!-- 📄 学習記録テーブル -->
+    <!-- 学習記録テーブル -->
     <table class="table">
         <thead>
             <tr>
@@ -117,7 +137,7 @@
         </tbody>
     </table>
 
-    <!-- 📌 ページネーション -->
+    <!-- ページネーション -->
     <div class="mt-3">
         {{ $journals->links() }}
     </div>

@@ -10,7 +10,7 @@
     <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#qaModal">投稿</button>
 
     <!-- 検索フォーム -->
-    <form action="{{ route('qas_index') }}" method="GET" class="mb-3">
+    <form action="{{ route('qas.index') }}" method="GET" class="mb-3">
         <div class="row">
             <div class="col-md-3">
                 <label>開始日:</label>

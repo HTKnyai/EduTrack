@@ -15,7 +15,7 @@ Route::middleware(['auth'])->group(function () {
 
     // 学習ジャーナル（生徒専用）
     Route::middleware(['role:0'])->group(function () {
-        Route::get('/journals', [DisplayController::class, 'journals_index'])->name('journals_index');
+        Route::get('/journals', [DisplayController::class, 'journals_index'])->name('journals.index');
         Route::get('/journals/weekly-data', [DisplayController::class, 'weeklyData']);
         Route::post('/journals/store', [RegistrationController::class, 'storeJournal'])->name('journals.store');
     });
@@ -29,7 +29,7 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // Q&A（全ユーザー対象）
-    Route::get('/qas', [DisplayController::class, 'qas_index'])->name('qas_index');
+    Route::get('/qas', [DisplayController::class, 'qas_index'])->name('qas.index');
     Route::post('/qas/store', [RegistrationController::class, 'storeQa'])->name('qas.store');
     Route::put('/qas/{id}', [RegistrationController::class, 'updateQa'])->name('qas.update');
     Route::delete('/qas/{id}', [RegistrationController::class, 'destroyQa'])->name('qas.destroy');

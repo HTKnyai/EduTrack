@@ -143,7 +143,7 @@ document.addEventListener("DOMContentLoaded", function() {
     function fetchJournalData() {
     document.getElementById("searchForm").addEventListener("submit", function(event) {
         event.preventDefault();
-        let url = new URL("{{ route('journals_index') }}", window.location.origin);
+        let url = new URL("{{ route('journals.index') }}", window.location.origin);
         let params = new URLSearchParams(new FormData(this));
 
         fetch(url + "?" + params.toString(), { 
