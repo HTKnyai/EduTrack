@@ -82,45 +82,47 @@ class DisplayController extends Controller
 
     public function qas_index(Request $request)
     {
-        $query = Qa::with(['user', 'target', 'replies']); // 一度に取得するリレーション
+        $query = Qa::with(['user', 'target', 'replies.allReplies']); // 再帰的に取得
     
+        // キーワード検索（再帰的検索を簡潔化）
         if ($request->filled('keyword')) {
             $keyword = '%' . $request->keyword . '%';
     
             $query->where(function ($q) use ($keyword) {
-                $q->where('contents', 'like', $keyword);
-                $this->applyNestedReplySearch($q, $keyword);
+                $this->qaNestSearch($q, $keyword);
             });
         }
     
+        // ユーザー検索
         if ($request->filled('user')) {
             $query->whereHas('user', function ($q) use ($request) {
                 $q->where('name', 'like', '%' . $request->user . '%');
             })->where('anonymize', '=', 0);
         }
     
+        // 日付検索
         if ($request->filled('start_date') && $request->filled('end_date')) {
-            $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
+            $query->whereBetween('created_at', [
+                $request->start_date . ' 00:00:00',
+                $request->end_date . ' 23:59:59'
+            ]);
         } elseif ($request->filled('start_date')) {
-            $query->whereDate('created_at', '>=', $request->start_date);
+            $query->where('created_at', '>=', $request->start_date . '00:00:00');
         } elseif ($request->filled('end_date')) {
-            $query->whereDate('created_at', '<=', $request->end_date);
+            $query->where('created_at', '<=', $request->end_date . '23:59:59');
         }
     
         return view('qas_index', ['qas' => $query->orderBy('created_at', 'desc')->paginate(10)]);
     }
     
-    /**
-     * 🔄 再帰的に `replies` の階層を検索対象に含める
-     */
-    private function applyNestedReplySearch($query, $keyword, $depth = 3)
+    private function qaNestSearch($query, $keyword, $depth = 5)
     {
-        if ($depth <= 0) return; // 深さ制限（無限ループ防止）
+        if ($depth <= 0) return;
     
-        $query->orWhereHas('replies', function ($q) use ($keyword, $depth) {
-            $q->where('contents', 'like', $keyword);
-            $this->applyNestedReplySearch($q, $keyword, $depth - 1); // 再帰的に適用
-        });
+        $query->where('contents', 'like', $keyword)
+              ->orWhereHas('replies', function ($subQuery) use ($keyword, $depth) {
+                  $this->recursiveSearch($subQuery, $keyword, $depth - 1);
+              });
     }
 
     /* ========== 教材管理関連 ========== */
@@ -133,8 +135,16 @@ class DisplayController extends Controller
             $query->where('title', 'like', '%' . $request->keyword . '%');
         }
 
+        // 日付検索
         if ($request->filled('start_date') && $request->filled('end_date')) {
-            $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
+            $query->whereBetween('updated_at', [
+                $request->start_date . ' 00:00:00',
+                $request->end_date . ' 23:59:59'
+            ]);
+        } elseif ($request->filled('start_date')) {
+            $query->where('updated_at', '>=', $request->start_date . ' 00:00:00');
+        } elseif ($request->filled('end_date')) {
+            $query->where('updated_at', '<=', $request->end_date . ' 23:59:59');
         }
 
         if ($request->filled('teacher')) {
@@ -143,7 +153,7 @@ class DisplayController extends Controller
             });
         }
 
-        return view('materials_index', ['materials' => $query->orderBy('created_at', 'desc')->paginate(10)]);
+        return view('materials_index', ['materials' => $query->orderBy('updated_at', 'desc')->paginate(10)]);
     }
 
     /* ========== 生徒管理関連 ========== */

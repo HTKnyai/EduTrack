@@ -26,7 +26,7 @@ class Qa extends Model
         return $this->hasMany(Qa::class, 'target_id');
     }
 
-    // **再帰的に全ての子質問を取得**
+    //全ての子質問を取得
     public function allReplies()
     {
         return $this->replies()->with('allReplies');

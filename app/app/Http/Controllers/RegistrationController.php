@@ -126,23 +126,23 @@ class RegistrationController extends Controller
     {
         $qa = Qa::findOrFail($id);
         if ($qa->user_id !== Auth::id()) {
-            return redirect()->route('qas_index')->with('error', '編集権限がありません');
+            return redirect()->route('qas.index')->with('error', '編集権限がありません');
         }
 
         $qa->update(['contents' => $request->validate(['contents' => 'required|string|max:500'])['contents']]);
 
-        return redirect()->route('qas_index')->with('success', '質問が更新されました');
+        return redirect()->route('qas.index')->with('success', '質問が更新されました');
     }
 
     public function destroyQa($id)
     {
         $qa = Qa::findOrFail($id);
         if ($qa->user_id !== Auth::id()) {
-            return redirect()->route('qas_index')->with('error', '削除権限がありません');
+            return redirect()->route('qas.index')->with('error', '削除権限がありません');
         }
 
         $qa->delete();
-        return redirect()->route('qas_index')->with('success', '質問が削除されました');
+        return redirect()->route('qas.index')->with('success', '質問が削除されました');
     }
 
     /*---------- 教材管理 ----------*/
@@ -225,7 +225,7 @@ class RegistrationController extends Controller
         $material = Material::findOrFail($id);
         $material->increment('dls'); //dlsのカウントを増やす
 
-        //ファイルパスの修正z
+        //ファイルパスの修正
         $filePath = storage_path('app/public/' . str_replace('storage/', '', $material->file_path));
         return response()->download($filePath, basename($material->file_path));
     }

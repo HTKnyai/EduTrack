@@ -5,12 +5,12 @@
     <h2>学習ジャーナル</h2>
     
     <div class="row">
-        <!-- 📊 グラフエリア -->
+        <!-- グラフエリア -->
         <div class="col-md-8">
             <canvas id="learningChart"></canvas>
         </div>
 
-        <!-- 📝 フォームエリア -->
+        <!-- フォームエリア -->
         <div class="col-md-4">
             <form id="journalForm">
                 @csrf
@@ -35,7 +35,7 @@
         </div>
     </div>
 
-    <!-- 🔍 検索フォーム -->
+    <!-- 検索フォーム -->
     <h3>記録一覧</h3>
     <form id="searchForm" class="mb-3">
         <div class="row">
@@ -57,20 +57,20 @@
         </div>
     </form>
 
-    <!-- 📄 学習記録のテーブル -->
+    <!-- 学習記録のテーブル -->
     <div class="mt-4">
         <div id="journalList">
             @include('journals_list')
         </div>
 
-        <!-- 📌 ページネーション（非同期リクエスト対応） -->
+        <!-- ページネーション（非同期リクエスト対応） -->
         <div class="d-flex justify-content-center" id="pagination">
             {!! $journals->appends(request()->query())->links() !!}
         </div>
     </div>
 </div>
 
-<!-- 📊 Chart.js -->
+<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function() {
