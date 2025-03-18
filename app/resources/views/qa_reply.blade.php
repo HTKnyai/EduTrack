@@ -5,7 +5,7 @@
     {{ $reply->contents }}
     <span class="text-muted">（{{ $reply->created_at->format('Y-m-d H:i') }}）</span>
 
-    <!-- ✏ 編集・削除ボタン（自分の回答のみ） -->
+    <!-- 編集・削除ボタン（自分の回答のみ） -->
     @if(auth()->id() == $reply->user_id)
         <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editQaModal{{ $reply->id }}">編集</button>
         <form action="{{ route('qas.destroy', $reply->id) }}" method="POST" class="d-inline">
@@ -38,7 +38,7 @@
         </div>
     </div>
 
-    <!-- 📌 ネストされた回答（再帰的に処理） -->
+    <!--ネスト回答 -->
     @if($reply->replies->count() > 0)
         <ul class="list-group mt-2">
             @foreach($reply->replies as $nestedReply)

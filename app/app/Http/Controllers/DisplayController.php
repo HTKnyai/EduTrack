@@ -121,7 +121,7 @@ class DisplayController extends Controller
     
         $query->where('contents', 'like', $keyword)
               ->orWhereHas('replies', function ($subQuery) use ($keyword, $depth) {
-                  $this->recursiveSearch($subQuery, $keyword, $depth - 1);
+                  $this->qaNestSearch($subQuery, $keyword, $depth - 1);
               });
     }
 

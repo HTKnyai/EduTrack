@@ -204,6 +204,9 @@ class RegistrationController extends Controller
             'file_path' => 'storage/' . $filePath,
         ]);
 
+            // 変更がなくても `updated_at` を更新
+    $material->touch();
+
         return redirect()->route('materials.index')->with('success', '教材が更新されました');
     }
 

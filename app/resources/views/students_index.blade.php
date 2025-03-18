@@ -6,7 +6,7 @@
 <div class="container">
     <h2>生徒管理</h2>
 
-    <!-- 🔍 検索フォーム -->
+    <!-- 検索フォーム -->
     <form action="{{ route('students.index') }}" method="GET" class="mb-3">
         <div class="row">
             <div class="col-md-3">
@@ -21,7 +21,7 @@
             <div class="col-md-3">
                 <input type="text" name="question" class="form-control" placeholder="疑問点で検索" value="{{ request('question') }}">
             </div>
-            <div class="col-md-2 d-flex align-items-end">
+            <div class="col-md-2 mt-3 d-flex align-items-end">
                 <button type="submit" class="btn btn-primary w-100">検索</button>
             </div>
         </div>

@@ -63,9 +63,9 @@
             @include('journals_list')
         </div>
 
-        <!-- ページネーション（非同期リクエスト対応） -->
+        <!-- ページネーション（非同期対応） -->
         <div class="d-flex justify-content-center" id="pagination">
-            {!! $journals->appends(request()->query())->links() !!}
+            {!! $journals->appends(request()->query())->links() !!} <!--$journals->links()に加え検索条件の維持を適用-->
         </div>
     </div>
 </div>
@@ -73,20 +73,20 @@
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-document.addEventListener("DOMContentLoaded", function() {
-    let csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+document.addEventListener("DOMContentLoaded", function() {//ページ読み込み完了後呼び出し
+    let csrfToken = document.querySelector('meta[name="csrf-token"]').content; //CSRG保護回避　ないと？
     let startTime = null;
 
-    function formatDateForMySQL(date) {
+    function formatDateForMySQL(date) { //DateをJS>SQLfーマット
     return date.getFullYear() + '-' +
-        String(date.getMonth() + 1).padStart(2, '0') + '-' +
+        String(date.getMonth() + 1).padStart(2, '0') + '-' + //(padstartで00を補う)
         String(date.getDate()).padStart(2, '0') + ' ' +
         String(date.getHours()).padStart(2, '0') + ':' +
         String(date.getMinutes()).padStart(2, '0') + ':' +
         String(date.getSeconds()).padStart(2, '0');
 }
 
-    function initJournalHandlers() {
+    function initJournalHandlers() { 
         document.getElementById("startButton").addEventListener("click", function() {
             startTime = new Date();
             document.getElementById("start_time").value = formatDateForMySQL(startTime);
@@ -94,8 +94,8 @@ document.addEventListener("DOMContentLoaded", function() {
             document.getElementById("endButton").disabled = false;
         });
 
-        document.getElementById("endButton").addEventListener("click", function() {
-            if (!startTime) {
+        document.getElementById("endButton").addEventListener("click", function() { 
+            if (!startTime) { //disabledされてはいるが
                 alert("学習開始ボタンを押してください！");
                 return;
             }
@@ -109,11 +109,12 @@ document.addEventListener("DOMContentLoaded", function() {
             }
 
             document.getElementById("end_time").value = formatDateForMySQL(endTime);
+            //このドキュメント内のend_timeというidを持つアイテムのvalueに右辺を代入
             document.getElementById("duration").value = durationInSeconds;
         });
 
         document.getElementById("journalForm").addEventListener("submit", function(event) {
-            event.preventDefault();
+            event.preventDefault(); //通常のページ遷移を防止
             let formData = new FormData(this);
             
             fetch("{{ route('journals.store') }}", {
@@ -140,53 +141,53 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 
-    function fetchJournalData() {
-    document.getElementById("searchForm").addEventListener("submit", function(event) {
-        event.preventDefault();
-        let url = new URL("{{ route('journals.index') }}", window.location.origin);
-        let params = new URLSearchParams(new FormData(this));
+    function fetchJournalData() { //検索
+        document.getElementById("searchForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+            let url = new URL("{{ route('journals.index') }}", window.location.origin);//new URL(相対パス, 絶対URL)
+            let params = new URLSearchParams(new FormData(this)); //フォームのデータをURLパラメータに変換
 
-        fetch(url + "?" + params.toString(), { 
-            headers: { "X-Requested-With": "XMLHttpRequest" }
-        })
-        .then(response => response.json())
-        .then(data => { 
-            document.getElementById("journalList").innerHTML = data.html;
-            document.getElementById("pagination").innerHTML = data.pagination; // 📌 ページネーションを更新
-        })
-        .catch(error => console.error("検索エラー:", error));
-    });
+            fetch(url + "?" + params.toString(), { 
+                headers: { "X-Requested-With": "XMLHttpRequest" } //ajaxリクエスト判定を付与
+            })
+            .then(response => response.json())
+            .then(data => { 
+                document.getElementById("journalList").innerHTML = data.html;
+                document.getElementById("pagination").innerHTML = data.pagination; // ページネーションを更新
+            })
+            .catch(error => console.error("検索エラー:", error));
+        });
 
-    document.addEventListener("click", function(e) {
-    if (e.target.tagName === "A" && e.target.closest("#pagination")) {
-        e.preventDefault();
-        fetch(e.target.href, { 
-            headers: { "X-Requested-With": "XMLHttpRequest" } // ✅ AJAXリクエストを明示
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTPエラー: ${response.status}`);
+        document.addEventListener("click", function(e) { //eはイベントオブジェクト
+        if (e.target.tagName === "A" && e.target.closest("#pagination")) { //#paginationの<a>タグ内
+            e.preventDefault();
+            fetch(e.target.href, { 
+                headers: { "X-Requested-With": "XMLHttpRequest" } // AJAXリクエストを明示
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTPエラー: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => { 
+                document.getElementById("journalList").innerHTML = data.html;
+                document.getElementById("pagination").innerHTML = data.pagination;
+            })
+            .catch(error => console.error("ページネーションエラー:", error));
             }
-            return response.json();
-        })
-        .then(data => { 
-            document.getElementById("journalList").innerHTML = data.html;
-            document.getElementById("pagination").innerHTML = data.pagination;
-        })
-        .catch(error => console.error("ページネーションエラー:", error));
-    }
-});
+        });
     }
 
     function renderChart() {
         var ctx = document.getElementById('learningChart').getContext('2d');
         var chartData = {
-            labels: @json($weeklyData->pluck('date')),
+            labels: @json($weeklyData->pluck('date')), //変換php>json
             datasets: [{
                 label: '学習時間（分）',
-                data: @json($weeklyData->pluck('total_duration')->map(fn($d) => round($d / 60, 1))),
-                backgroundColor: 'rgba(54, 162, 235, 0.5)',
-                borderColor: 'rgba(54, 162, 235, 1)',
+                data: @json($weeklyData->pluck('total_duration')->map(fn($d) => round($d / 60, 1))),//0.0分まで丸め込み
+                backgroundColor: 'rgba(50, 160, 230, 0.5)',
+                borderColor: 'rgba(50, 160, 230, 1)',
                 borderWidth: 1
             }]
         };

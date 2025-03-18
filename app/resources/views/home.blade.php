@@ -1,4 +1,5 @@
-@extends('layouts.app')
+<!--dashboardがhome代わりのため不使用-->
+@extends('layouts.app') 
 
 @section('content')
 <div class="container">

@@ -3,13 +3,14 @@
 @section('title', '生徒の学習ジャーナル')
 
 @section('content')
+
 @php
     use Carbon\Carbon;
 @endphp
 
 <!--削除時のアラート-->
 @if (session('success'))
-    <div class="alert alert-danger" id="successMessage">
+    <div class="alert alert-warning" id="successMessage">
         {{ session('success') }}
     </div>
 
@@ -20,7 +21,7 @@
             if (message) {
                 message.style.transition = "opacity 0.5s ease-out"; // フェードアウト
                 message.style.opacity = "0";
-                setTimeout(() => message.remove(), 500); // 完全に削除
+                setTimeout(() => message.remove(), 500); 
             }
         }, 2000); // ミリ秒
     </script>
@@ -84,7 +85,7 @@
                     <form action="{{ route('students.journals.destroy', $journal->id) }}" method="POST" class="d-inline">
                         @csrf
                         @method('DELETE')
-                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('本当に削除しますか？')">削除</button>
+                        <button type="submit" class="btn btn-danger btn-sm mt-1" onclick="return confirm('本当に削除しますか？')">削除</button>
                     </form>
                 </td>
             </tr>

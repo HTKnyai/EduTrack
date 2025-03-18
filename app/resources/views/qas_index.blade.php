@@ -22,14 +22,14 @@
             </div>
             <div class="col-md-3">
                 <label>キーワード検索:</label>
-                <input type="text" name="keyword" class="form-control" placeholder="例: 計算ミス" value="{{ request('keyword') }}">
+                <input type="text" name="keyword" class="form-control" placeholder="例: 公式" value="{{ request('keyword') }}">
             </div>
             <div class="col-md-3">
                 <label>投稿者:</label>
                 <input type="text" name="user" class="form-control" placeholder="投稿者名" value="{{ request('user') }}">
             </div>
             <div class="col-md-2 d-flex align-items-end">
-                <button type="submit" class="btn btn-primary w-100">検索</button>
+                <button type="submit" class="btn btn-primary w-100 mt-3">検索</button>
             </div>
         </div>
     </form>
@@ -55,7 +55,7 @@
                             <select name="target_id" class="form-select mt-2" id="qaSelect">
                                 <option value="0">新規質問</option>
                                 @foreach($qas as $qa)
-                                    <option value="{{ $qa->id }}">{{ Str::limit($qa->contents, 30) }}</option>
+                                    <option value="{{ $qa->id }}">{{ Str::limit($qa->contents, 30) }}</option> <!--30文字制限-->
                                 @endforeach
                             </select>
                         </div>
@@ -79,7 +79,7 @@
                         @if($qa->anonymize) 匿名 @else {{ $qa->user->name }} @endif
                     </strong>:
                     {{ $qa->contents }}
-                    <span class="text-muted">（{{ $qa->created_at->format('Y-m-d H:i') }}）</span>
+                    <span class="text-muted">（{{ $qa->created_at->format('Y-m-d H:i') }}）</span><!--薄文字時間表記-->
 
                     <!-- 編集・削除ボタン（自分の投稿のみ） -->
                     @if(auth()->id() == $qa->user_id)
@@ -100,7 +100,7 @@
                                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                 </div>
                                 <div class="modal-body">
-                                    <form action="{{ route('qas.update', $qa->id) }}" method="POST">
+                                    <form action="{{ route('qas.update', $qa->id) }}" method="POST"><!--最初からPUTにはできない-->
                                         @csrf
                                         @method('PUT')
                                         <div class="mb-3">
@@ -136,16 +136,16 @@
 <!-- 検索用スクリプト -->
 <script>
 document.getElementById('qaSearch').addEventListener('input', function() {
-    let filter = this.value.toLowerCase();
+    let filter = this.value.toLowerCase();//全て小文字に　違いを無視
     let options = document.getElementById('qaSelect').options;
 
     for (let i = 0; i < options.length; i++) {
         let text = options[i].text.toLowerCase();
-        options[i].style.display = text.includes(filter) ? "" : "none";
+        options[i].style.display = text.includes(filter) ? "" : "none"; //検索と一致していればそのまま表示、なければ非表示に
     }
 });
 </script>
 
 <!-- Bootstrapのスクリプト -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!--script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>-->
 @endsection

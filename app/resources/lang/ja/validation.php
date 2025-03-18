@@ -146,6 +146,7 @@ return [
     |
     */
 
+    //再登録（被りあり）
     'required' => ':attribute は必須です。',
     'email' => ':attribute には有効なメールアドレスを入力してください。',
     'max' => [

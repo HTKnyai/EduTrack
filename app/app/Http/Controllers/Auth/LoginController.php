@@ -28,7 +28,7 @@ class LoginController extends Controller
      *
      * @var string
      */
-    protected $redirectTo = RouteServiceProvider::HOME;
+    protected $redirectTo = RouteServiceProvider::HOME; //指定は/dashboard
 
     /**
      * Create a new controller instance.
@@ -47,6 +47,6 @@ class LoginController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/login'); // ✅ ログアウト後に /login へリダイレクト
+        return redirect('/login'); // ログアウト後に /login へリダイレクト
     }
 }
