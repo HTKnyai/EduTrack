@@ -22,8 +22,10 @@
                     @if(auth()->check() && auth()->user()->role == 1) <!-- 教師のみ -->
                         <li class="nav-item"><a class="nav-link" href="/students">生徒管理</a></li>
                     @endif
+                    @if(auth()->check()) 
                     <li class="nav-item"><a class="nav-link" href="/qas">Q&A</a></li>
                     <li class="nav-item"><a class="nav-link" href="/materials">教材</a></li>
+                    @endif
                 </ul>
                 
                 <!-- ユーザー認証機能 -->
