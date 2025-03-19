@@ -25,4 +25,5 @@ return [
     'Confirm Password'=>'パスワード（確認用）',
     'Remember Me' => 'ログイン情報を記憶する',
     'Forgot Your Password?' => 'パスワードをお忘れですか？',
+    'Registration'=>'新規登録はこちら',
 ];

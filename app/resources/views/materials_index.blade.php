@@ -8,7 +8,7 @@
     <form action="{{ route('materials.index') }}" method="GET" class="mb-3">
         <div class="row">
             <div class="col-md-3">
-                <label>開始日</label>
+                <label>開始日（更新日）</label>
                 <input type="date" name="start_date" class="form-control" value="{{ request('start_date') }}">
             </div>
             <div class="col-md-3">

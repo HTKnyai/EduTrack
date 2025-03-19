@@ -25,7 +25,7 @@
                             </div>
                         </div>
 
-                        <div class="form-group row">
+                        <div class="form-group row mt-1">
                             <label for="password" class="col-md-4 col-form-label text-md-right">{{ __('auth.Password') }}</label>
 
                             <div class="col-md-6">
@@ -67,6 +67,13 @@
                     </form>
                 </div>
             </div>
+            <!--画面縮小時に新規登録が表示されないのが気になる場合
+            @if (Route::has('register'))
+                <a class="btn btn-link" href="{{ route('register') }}">
+                    {{ __('auth.Registration') }}
+                </a>
+            @endif
+            -->
         </div>
     </div>
 </div>

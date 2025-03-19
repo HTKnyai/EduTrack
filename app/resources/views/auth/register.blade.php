@@ -25,7 +25,7 @@
                             </div>
                         </div>
 
-                        <div class="form-group row">
+                        <div class="form-group row mt-1">
                             <label for="email" class="col-md-4 col-form-label text-md-right">{{ __('auth.E-Mail Address') }}</label>
 
                             <div class="col-md-6">
@@ -39,7 +39,7 @@
                             </div>
                         </div>
 
-                        <div class="form-group row">
+                        <div class="form-group row mt-1">
                             <label for="password" class="col-md-4 col-form-label text-md-right">{{ __('auth.Password') }}</label>
 
                             <div class="col-md-6">
@@ -53,7 +53,7 @@
                             </div>
                         </div>
 
-                        <div class="form-group row">
+                        <div class="form-group row mt-1">
                             <label for="password-confirm" class="col-md-4 col-form-label text-md-right">{{ __('auth.Confirm Password') }}</label>
 
                             <div class="col-md-6">
@@ -61,12 +61,14 @@
                             </div>
                         </div>
 
-                        <div class="mb-3"><!--ロール追加-->
-                            <label for="role" class="form-label">ユーザータイプ</label>
-                            <select name="role" id="role" class="form-control" required>
-                                <option value="0">生徒</option>
-                                <option value="1">教師</option>
-                            </select>
+                        <div class="form-group row mb-3 mt-1"><!--ロール追加-->
+                            <label for="role" class="form-label col-md-4 col-form-label text-md-right">ユーザータイプ</label>
+                            <div class="col-md-6">
+                                <select name="role" id="role" class="form-control" required>
+                                    <option value="0">生徒</option>
+                                    <option value="1">教師</option>
+                                </select>
+                            </div>
                         </div>
 
                         <div class="form-group row mb-0">

@@ -8,7 +8,7 @@
     use Carbon\Carbon;
 @endphp
 
-<!--削除時のアラート-->
+<!--編集・削除成功時のアラート-->
 @if (session('success'))
     <div class="alert alert-warning" id="successMessage">
         {{ session('success') }}
