@@ -21,7 +21,14 @@
             <!--日時をCarbon変換 ただしモデルで行なっているのでparse()は本来不要-->
             <td>{{ \Carbon\Carbon::parse($journal->start_time)->format('Y-m-d H:i:s') }}</td>
             <td>{{ \Carbon\Carbon::parse($journal->end_time)->format('Y-m-d H:i:s') }}</td>
-            <td>{{ $journal->duration }} 秒</td>
+            <!--<td>{{ $journal->duration }} 秒</td>-->
+            <td>
+                @if ($journal->duration < 60)
+                    {{ $journal->duration }} 秒
+                @else
+                    {{ number_format($journal->duration / 60, 1) }} 分
+                @endif
+            </td>
             <td>{{ $journal->goals }}</td>
             <td>{{ $journal->learnings }}</td>
             <td>{{ $journal->questions }}</td>
