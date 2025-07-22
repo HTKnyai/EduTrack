@@ -12,6 +12,11 @@
 - Q&A掲示板やファイル共有で他者と知見を交換
 このようなコンセプトで、学習心理学に基づいた効率的で快適なUXを目指しました。
 
+<img width="1458" height="791" alt="EduTrack1" src="https://github.com/user-attachments/assets/326dd044-dfa7-4cee-8547-8700a5c1b7f8" />
+<img width="1434" height="503" alt="EduTrack2" src="https://github.com/user-attachments/assets/246f32b6-e3a4-4ea3-8f63-017b5c670e84" />
+<img width="1026" height="744" alt="EduTrack3" src="https://github.com/user-attachments/assets/d9f4f998-e344-4071-903f-693c30d43ab3" />
+
+
 # Edutrack: A learning journal that visualizes your educational journey
 Tech Stack: Laravel / Bootstrap / Chart.js</p>
 <br>
