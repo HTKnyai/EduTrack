@@ -13,15 +13,15 @@
 このようなコンセプトで、学習心理学に基づいた効率的で快適なUXを目指しました。
 
 # Edutrack: A learning journal that visualizes your educational journey
-Tech Stack: Laravel / Bootstrap / Chart.js
+Tech Stack: Laravel / Bootstrap / Chart.js</p>
 <br>
 What were your learning goals?</p>
 What did you actually learn?</p>
 What questions still remain?</p>
 <br>
-Edutrack is an educational support system designed to make learning more personal and meaningful by allowing users to log not just their study time, but also what they’ve learned, what goals they set, and what questions arose during study.
+Edutrack is an educational support system designed to make learning more personal and meaningful by allowing users to log not just their study time, but also what they’ve learned, what goals they set, and what questions arose during study.</p>
 <br>
-Originally developed as a portfolio project for corporate use, this was my first solo development effort. Therefore, in addition to its core educational functions, it also includes features typically expected in internal business applications such as attendance tracking, file management, and bulletin boards.
+Originally developed as a portfolio project for corporate use, this was my first solo development effort. Therefore, in addition to its core educational functions, it also includes features typically expected in internal business applications such as attendance tracking, file management, and bulletin boards.</p>
 <br>
 Key Features:
 •	Record and visualize study content, time, and questions in chronological order; teachers can manage student progress from a dashboard
